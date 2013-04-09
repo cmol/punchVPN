@@ -9,7 +9,7 @@ class udpKnock(object):
         try:
             self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         except socket.error:
-            print "failed to create socket"
+            print("failed to create socket")
             exit()
 
     def knock(self, addr, port):
