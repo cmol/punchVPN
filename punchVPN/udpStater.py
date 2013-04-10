@@ -1,4 +1,4 @@
-class UdpStater(object):
+class udpStater(object):
 
     def __init__(self):
         """initializer, must be here"""
