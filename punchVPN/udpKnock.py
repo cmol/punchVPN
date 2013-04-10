@@ -1,18 +1,18 @@
 import socket
-import time
-import os
+import errno
 
-class udpKnock(object):
-
-    def __init__(self):
-        """docstring for __init__"""
-        try:
-            self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        except socket.error:
-            print("failed to create socket")
-            exit()
-
-    def knock(self, addr, port):
-        """Open an UDP connection to $addr on dst port $port"""
-        #self.s.sendto("wafande", (addr, port))
-        os.system("echo \"WTF\" | nc -u "+addr+" "+str(port))
+class udpKnock:
+    @staticmethod
+    def knock(s, addr, lport, rport):
+        """Connect to $addr with lport as local port.
+        Try until a port is useable"""
+        while(1):
+            try:
+                s.bind(('', lport))
+            except socket.error as e:
+                 if e.errno != errno.EADDRINUSE:
+                     raise e
+                 lport+=1
+            else:
+                s.connect((addr, rport))
+                return s, lport
