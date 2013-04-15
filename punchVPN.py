@@ -5,6 +5,8 @@ from random import randint
 from punchVPN.udpKnock import udpKnock
 from punchVPN.WebConnect import WebConnect
 import argparse
+from multiprocessing import Process
+import os
 
 parser = argparse.ArgumentParser(prog='punchVPN.py',
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -19,6 +21,16 @@ peer = args.peer
 def log(m):
     print(m)
 
+def startVPNserver(lport, raddr, rport):
+    """Start the VPN server and wait for connection"""
+    if os.name == 'posix':
+        os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tun1 --ifconfig 10.4.0.1 10.4.0.2 --verb 9")
+
+def startVPNclient(lport, raddr, rport):
+    """Start the VPN client and connect"""
+    if os.name == 'posix':
+        os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tun1 --ifconfig 10.4.0.2 10.4.0.1 --verb 9")
+
 # Choose some random ports (stop "early" to be sure we get a port)
 lport = randint(1025, 60000)
 
@@ -28,27 +40,39 @@ lport = knocker.lport
 
 # Connect to the webserver for connection and such
 thrdPrtyHost = "http://localhost:8080"
-web = WebConnect(thrdPrtyHost, lport)
+web = WebConnect(args.address, lport)
 
 token = web.get("/")
 log(token)
 
 if peer:
-    log(web.post("/connect/",
+    respons = web.post("/connect/",
         {'token': peer,
          'lport': lport,
-         'uuid':  token}))
+         'uuid':  token})
+    log(respons)
+    raddr, rport = respons.split(",")
     """This is where we are supposed to start the openVPN client"""
+    vpn = Process(target=startVPNclient, args=(lport, raddr, rport))
+    vpn.start()
 else:
-    log(web.post("/me/",
+    respons = web.post("/me/",
         {'uuid': token,
-         'lport' : lport}))
+         'lport' : lport})
+    log(respons)
+    raddr, rport = respons.split(",")
+    s = knocker.knock(raddr, int(rport))
+    s.close()
+    vpn = Process(target=startVPNserver, args=(lport, raddr, rport))
+    vpn.start()
     """This is where we are supposed to port knock, and start the openVPN server"""
     log(web.post("/ready/",
         {'uuid': token}))
 
+
+vpn.join()
 # Use socket, and connect to the other end
-raddr = "8.8.8.8"
-rport = 12345
-s = knocker.knock(raddr, rport)
+#raddr = "8.8.8.8"
+#rport = 12345
+#s = knocker.knock(raddr, rport)
 #log("rport, lport is: "+str(rport)+", "+str(lport))
