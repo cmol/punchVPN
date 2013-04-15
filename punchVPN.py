@@ -6,9 +6,9 @@ from punchVPN.udpKnock import udpKnock
 from punchVPN.WebConnect import WebConnect
 import argparse
 
-parser = argparse.ArgumentParser(prog='snake.py',
+parser = argparse.ArgumentParser(prog='punchVPN.py',
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                description='Small snake game for many players')
+                                description='Client for making p2p VPN connections behind nat')
 parser.add_argument('-p', '--peer', type=str, default=None, help='Token of your peer')
 parser.add_argument('-c', '--client', action='store_true', help='Is this a client?')
 parser.add_argument('-a', '--address', type=str, default='http://localhost:8080', help='What is the server address?')
