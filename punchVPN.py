@@ -14,6 +14,7 @@ parser = argparse.ArgumentParser(prog='punchVPN.py',
 parser.add_argument('-p', '--peer', type=str, default=None, help='Token of your peer')
 parser.add_argument('-c', '--client', action='store_true', help='Is this a client?')
 parser.add_argument('-a', '--address', type=str, default='http://localhost:8080', help='What is the server address?')
+parser.add_argument('--no-vpn', action='store_true', help='Run with no VPN (for debug)')
 parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
 args = parser.parse_args()
 
@@ -25,13 +26,15 @@ def log(m):
 
 def startVPNserver(lport, raddr, rport):
     """Start the VPN server and wait for connection"""
-    if os.name == 'posix':
-        os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tun1 --ifconfig 10.4.0.1 10.4.0.2 --verb 9")
+    if not args.no_vpn:
+        if os.name == 'posix':
+            os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tun1 --ifconfig 10.4.0.1 10.4.0.2 --verb 9")
 
 def startVPNclient(lport, raddr, rport):
     """Start the VPN client and connect"""
-    if os.name == 'posix':
-        os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tun1 --ifconfig 10.4.0.2 10.4.0.1 --verb 9")
+    if not args.no_vpn:
+        if os.name == 'posix':
+            os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tun1 --ifconfig 10.4.0.2 10.4.0.1 --verb 9")
 
 # Choose some random ports (stop "early" to be sure we get a port)
 lport = randint(1025, 60000)
