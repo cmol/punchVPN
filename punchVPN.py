@@ -21,6 +21,7 @@ args = parser.parse_args()
 peer = args.peer
 
 def log(m):
+    """Add logging based on ARGS"""
     if args.verbose:
         print(m)
 
@@ -46,6 +47,7 @@ lport = knocker.lport
 # Connect to the webserver for connection and such
 web = WebConnect(args.address, lport)
 
+# Get token from server
 token = web.get("/")["token"]
 print("Token is: "+token)
 
@@ -81,8 +83,3 @@ else:
 
 
 vpn.join()
-# Use socket, and connect to the other end
-#raddr = "8.8.8.8"
-#rport = 12345
-#s = knocker.knock(raddr, rport)
-#log("rport, lport is: "+str(rport)+", "+str(lport))
