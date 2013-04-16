@@ -25,11 +25,11 @@ def log(m):
     if args.verbose:
         print(m)
 
-def startVPNserver(lport, raddr, rport):
+def startVPN(lport, raddr, rport, lVPN, rVPN):
     """Start the VPN server and wait for connection"""
     if not args.no_vpn:
         if os.name == 'posix':
-            os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tun1 --ifconfig 10.4.0.1 10.4.0.2 --verb 9")
+            os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tun1 --ifconfig "+lVPN+" "+rVPN+" --verb 9")
 
 def startVPNclient(lport, raddr, rport):
     """Start the VPN client and connect"""
@@ -52,34 +52,34 @@ token = web.get("/")["token"]
 print("Token is: "+token)
 
 if peer:
+    """Connect and tell you want 'token'"""
     respons = web.post("/connect/",
         {'token': peer,
          'lport': lport,
          'uuid':  token})
-    log(respons)
     if respons.get('err'):
         print("Got error: "+respons['err'])
         exit()
-    raddr = respons["peer.ip"]
-    rport = respons["peer.lport"]
-    """This is where we are supposed to start the openVPN client"""
-    knocker.s.close()
-    vpn = Process(target=startVPNclient, args=(lport, raddr, rport))
-    vpn.start()
 else:
+    """Connect and wait for someone to access 'token'"""
     respons = web.post("/me/",
         {'uuid': token,
          'lport' : lport})
-    log(respons)
-    raddr = respons["peer.ip"]
-    rport = respons["peer.lport"]
+
+log(respons)
+raddr = respons["peer.ip"]
+rport = respons["peer.lport"]
+lVPNaddr = respons["me.VPNaddr"]
+rVPNaddr = respons["peer.VPNaddr"]
+
+if not peer:
+    """UDP knock if needed and tell the 3rd party"""
     s = knocker.knock(raddr, int(rport))
-    s.close()
-    vpn = Process(target=startVPNserver, args=(lport, raddr, rport))
-    vpn.start()
-    """This is where we are supposed to port knock, and start the openVPN server"""
-    log(web.post("/ready/",
-        {'uuid': token}))
+    log(web.post("/ready/", {'uuid': token}))
+
+knocker.s.close()
+vpn = Process(target=startVPN, args=(lport, raddr, rport, lVPNaddr, rVPNaddr))
+vpn.start()
 
 
 vpn.join()
