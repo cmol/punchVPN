@@ -26,12 +26,6 @@ def log(m):
         print(m)
 
 def startVPN(lport, raddr, rport, lVPN, rVPN):
-    """Start the VPN server and wait for connection"""
-    if not args.no_vpn:
-        if os.name == 'posix':
-            os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tun1 --ifconfig "+lVPN+" "+rVPN+" --verb 9")
-
-def startVPNclient(lport, raddr, rport):
     """Start the VPN client and connect"""
     if not args.no_vpn:
         if os.name == 'posix':
