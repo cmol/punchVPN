@@ -55,6 +55,9 @@ if peer:
          'lport': lport,
          'uuid':  token})
     log(respons)
+    if respons.get('err'):
+        print("Got error: "+respons['err'])
+        exit()
     raddr = respons["peer.ip"]
     rport = respons["peer.lport"]
     """This is where we are supposed to start the openVPN client"""
