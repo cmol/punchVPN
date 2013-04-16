@@ -56,10 +56,11 @@ def hello():
 def me():
     global new_request_event
     global peers
-    me = Peer(request.environ.get('REMOTE_ADDR'), request.POST.get('lport'))
-    peers[request.POST.get('uuid')] = me
+    post_data = json.loads(request.POST.get('body'))
+    me = Peer(request.environ.get('REMOTE_ADDR'), post_data['lport'])
+    peers[post_data['uuid']] = me
     while(1):
-        log("Peer '"+request.POST.get('uuid')+"' is waiting")
+        log("Peer '"+post_data['uuid']+"' is waiting")
         new_request_event.wait()
         if me.peer:
             msg = {"peer.ip": me.peer.ip,
@@ -72,22 +73,23 @@ def connect():
     global new_request_event
     global new_connect_event
     global peers
-    token = request.POST.get('token')
+    post_data = json.loads(request.POST.get('body'))
+    token = post_data['token']
     if not peers.has_key(token):
         return json.dumps({"err": "NOT_CONNECTED"})
-    me = Peer(request.environ.get('REMOTE_ADDR'), request.POST.get('lport'))
-    peers[request.POST.get('uuid')] = me
+    me = Peer(request.environ.get('REMOTE_ADDR'), post_data['lport'])
+    peers[post_data['uuid']] = me
     peers[token].peer = me
     new_request_event.set()
     new_request_event.clear()
     while(1):
-        log("Peer '"+request.POST.get('uuid')+"' requested '"+token+"'")
+        log("Peer '"+post_data['uuid']+"' requested '"+token+"'")
         new_connect_event.wait()
         if me.peer:
             msg = {"peer.ip": me.peer.ip,
                    "peer.lport": me.peer.lport}
             msg = json.dumps(msg)
-            del peers[request.POST.get('uuid')]
+            del peers[post_data['uuid']]
             del peers[token]
             return msg
 
@@ -95,9 +97,10 @@ def connect():
 def ready():
     global new_connect_event
     global peers
-    me = peers[request.POST.get('uuid')]
+    post_data = json.loads(request.POST.get('body'))
+    me = peers[post_data['uuid']]
     me.peer.peer = me
-    log("Peer '"+request.POST.get('uuid')+"' is ready")
+    log("Peer '"+post_data['uuid']+"' is ready")
     new_connect_event.set()
     new_connect_event.clear()
     return json.dumps({"status": "OK"})

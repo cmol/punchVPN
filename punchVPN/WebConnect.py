@@ -13,6 +13,7 @@ class WebConnect(object):
         return self.request(path)
 
     def post(self, path, post_data):
+        post_data = {"body": json.dumps(post_data)}
         return self.request(path, post_data)
 
     def request(self, path, data=None):
