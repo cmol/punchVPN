@@ -9,6 +9,7 @@ from time import sleep
 import json
 
 def log(m):
+    """Logger, only log if asked to. (Default: False)"""
     if False:
         print m
 
@@ -38,6 +39,7 @@ class BeakerPlugin(object):
         return wrapper
 
 class Peer(object):
+    """Peer class for identifying the peers and creating a relation between them."""
     def __init__(self, ip, lport):
         """Set up peer object"""
         self.ip = ip
@@ -50,18 +52,34 @@ new_request_event = Event()
 
 @route('/')
 def hello():
+    """Return 2nd part of a UUID4, for a semi-uniqe token"""
     return json.dumps({"token":str(uuid.uuid4()).split("-")[1]})
 
 @route('/me/', method='POST')
 def me():
+    """Adds the connecting peer to the peers list and waits for a
+    peer wating to connect to ealier given UUID.
+    This method used long polling and relies on the port specified
+    by the client to be accecible throug whatever method the
+    client finds usealbe."""
+
+    # Register global vars
     global new_request_event
     global peers
+
+    # Parse the POST data from JSON to a dict
     post_data = json.loads(request.POST.get('body'))
+
+    # Create and add object for self (me) to the peers dict
     me = Peer(request.environ.get('REMOTE_ADDR'), post_data['lport'])
     peers[post_data['uuid']] = me
+
+    # Looping wait for the right client
+    log("Peer '"+post_data['uuid']+"' is waiting")
     while(1):
-        log("Peer '"+post_data['uuid']+"' is waiting")
         new_request_event.wait()
+
+        # Report back the values of the matching client
         if me.peer:
             msg = {"peer.ip": me.peer.ip,
                    "peer.lport": me.peer.lport}
@@ -70,21 +88,43 @@ def me():
 
 @route('/connect/', method='POST')
 def connect():
+    """Tests if the connecting peer has a useable token, and
+    adds the peer to the peers dict if the token is useable.
+    Raises event for waiting peers that a new client is
+    connected and waits for one of the waiting peers
+    (identified by 'token'), to ready its connection and
+    report status = ready"""
+
+    # Register global vars
     global new_request_event
     global new_connect_event
     global peers
+
+    # Parse the POST data from JSON to a dict and extract 'token'
     post_data = json.loads(request.POST.get('body'))
     token = post_data['token']
+
+    # Look for peer identified by 'token' or return error to client
     if not peers.has_key(token):
         return json.dumps({"err": "NOT_CONNECTED"})
+
+    # Create and add self (me) to peers dict.
+    # Sets peer(token).peer to self
     me = Peer(request.environ.get('REMOTE_ADDR'), post_data['lport'])
     peers[post_data['uuid']] = me
     peers[token].peer = me
+
+    # Raises the events for peers to wakeup and connect
     new_request_event.set()
     new_request_event.clear()
+
+    # Looping wait for peer to return a ready connection
+    log("Peer '"+post_data['uuid']+"' requested '"+token+"'")
     while(1):
-        log("Peer '"+post_data['uuid']+"' requested '"+token+"'")
         new_connect_event.wait()
+
+        # Delete self and peer from peers dict.
+        # return connection params
         if me.peer:
             msg = {"peer.ip": me.peer.ip,
                    "peer.lport": me.peer.lport}
@@ -95,12 +135,23 @@ def connect():
 
 @route('/ready/', method='POST')
 def ready():
+    """Sets the peer of peer to self, and raise the
+    event for the waiting connections"""
+
+    # Register globals
     global new_connect_event
     global peers
+
+    # Parse POST data from JSON to dict
     post_data = json.loads(request.POST.get('body'))
+
+    # Register me, and set peer of me' peer, to me
+    # Wow, that feels weird
     me = peers[post_data['uuid']]
     me.peer.peer = me
     log("Peer '"+post_data['uuid']+"' is ready")
+
+    # Raise events for waiting connections and return ready
     new_connect_event.set()
     new_connect_event.clear()
     return json.dumps({"status": "OK"})
