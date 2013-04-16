@@ -7,6 +7,7 @@ import bottle
 from bottle import route, request, static_file, template, run
 from time import sleep
 import json
+from random import randint
 
 def log(m):
     """Logger, only log if asked to. (Default: False)"""
@@ -44,6 +45,7 @@ class Peer(object):
         """Set up peer object"""
         self.ip = ip
         self.lport = lport
+        self.VPNaddr = None
         self.peer = None
 
 peers = {}
@@ -82,7 +84,9 @@ def me():
         # Report back the values of the matching client
         if me.peer:
             msg = {"peer.ip": me.peer.ip,
-                   "peer.lport": me.peer.lport}
+                   "peer.lport": me.peer.lport,
+                   "peer.VPNaddr": me.peer.VPNaddr,
+                   "me.VPNaddr": me.VPNaddr}
             msg = json.dumps(msg)
             return msg
 
@@ -114,6 +118,11 @@ def connect():
     peers[post_data['uuid']] = me
     peers[token].peer = me
 
+    # Find link local addresses for useing in VPN
+    c,d = randint(1,254), randint(1,253)
+    me.VPNaddr = "169.254."+str(c)+"."+str(d+1)
+    peers[token].VPNaddr = "169.254."+str(c)+"."+str(d)
+
     # Raises the events for peers to wakeup and connect
     new_request_event.set()
     new_request_event.clear()
@@ -127,7 +136,9 @@ def connect():
         # return connection params
         if me.peer:
             msg = {"peer.ip": me.peer.ip,
-                   "peer.lport": me.peer.lport}
+                   "peer.lport": me.peer.lport,
+                   "peer.VPNaddr": me.peer.VPNaddr,
+                   "me.VPNaddr": me.VPNaddr}
             msg = json.dumps(msg)
             del peers[post_data['uuid']]
             del peers[token]
