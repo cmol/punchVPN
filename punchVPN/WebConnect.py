@@ -1,5 +1,6 @@
 import urllib.request
 import urllib.parse
+import json
 
 class WebConnect(object):
     def __init__(self, host, lport):
@@ -19,6 +20,6 @@ class WebConnect(object):
             respons = urllib.request.urlopen(self.host+path,urllib.parse.urlencode(data).encode('utf-8'))
         else:
             respons = urllib.request.urlopen(self.host+path)
-        content = respons.read().decode("UTF-8")
+        content = json.loads(respons.read().decode("UTF-8"))
         respons.close()
         return content

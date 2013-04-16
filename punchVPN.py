@@ -44,10 +44,9 @@ knocker = udpKnock(socket.socket(socket.AF_INET, socket.SOCK_DGRAM), lport)
 lport = knocker.lport
 
 # Connect to the webserver for connection and such
-thrdPrtyHost = "http://localhost:8080"
 web = WebConnect(args.address, lport)
 
-token = web.get("/")
+token = web.get("/")["token"]
 print("Token is: "+token)
 
 if peer:
@@ -56,7 +55,8 @@ if peer:
          'lport': lport,
          'uuid':  token})
     log(respons)
-    raddr, rport = respons.split(",")
+    raddr = respons["peer.ip"]
+    rport = respons["peer.lport"]
     """This is where we are supposed to start the openVPN client"""
     knocker.s.close()
     vpn = Process(target=startVPNclient, args=(lport, raddr, rport))
@@ -66,7 +66,8 @@ else:
         {'uuid': token,
          'lport' : lport})
     log(respons)
-    raddr, rport = respons.split(",")
+    raddr = respons["peer.ip"]
+    rport = respons["peer.lport"]
     s = knocker.knock(raddr, int(rport))
     s.close()
     vpn = Process(target=startVPNserver, args=(lport, raddr, rport))

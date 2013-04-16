@@ -6,6 +6,7 @@ from beaker.middleware import SessionMiddleware
 import bottle
 from bottle import route, request, static_file, template, run
 from time import sleep
+import json
 
 def log(m):
     if False:
@@ -49,7 +50,7 @@ new_request_event = Event()
 
 @route('/')
 def hello():
-    return str(uuid.uuid4()).split("-")[1]
+    return json.dumps({"token":str(uuid.uuid4()).split("-")[1]})
 
 @route('/me/', method='POST')
 def me():
@@ -61,7 +62,10 @@ def me():
         log("Peer '"+request.POST.get('uuid')+"' is waiting")
         new_request_event.wait()
         if me.peer:
-            return ",".join((me.peer.ip, me.peer.lport))
+            msg = {"peer.ip": me.peer.ip,
+                   "peer.lport": me.peer.lport}
+            msg = json.dumps(msg)
+            return msg
 
 @route('/connect/', method='POST')
 def connect():
@@ -70,7 +74,7 @@ def connect():
     global peers
     token = request.POST.get('token')
     if not peers.has_key(token):
-        return "NOT_CONNECTED"
+        return json.dumps({"err": "NOT_CONNECTED"})
     me = Peer(request.environ.get('REMOTE_ADDR'), request.POST.get('lport'))
     peers[request.POST.get('uuid')] = me
     peers[token].peer = me
@@ -80,7 +84,9 @@ def connect():
         log("Peer '"+request.POST.get('uuid')+"' requested '"+token+"'")
         new_connect_event.wait()
         if me.peer:
-            msg = ",".join((me.peer.ip, me.peer.lport))
+            msg = {"peer.ip": me.peer.ip,
+                   "peer.lport": me.peer.lport}
+            msg = json.dumps(msg)
             del peers[request.POST.get('uuid')]
             del peers[token]
             return msg
@@ -94,7 +100,7 @@ def ready():
     log("Peer '"+request.POST.get('uuid')+"' is ready")
     new_connect_event.set()
     new_connect_event.clear()
-    return "OK"
+    return json.dumps({"status": "OK"})
 
 app = bottle.app()
 app.install(BeakerPlugin())
