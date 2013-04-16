@@ -14,12 +14,14 @@ parser = argparse.ArgumentParser(prog='punchVPN.py',
 parser.add_argument('-p', '--peer', type=str, default=None, help='Token of your peer')
 parser.add_argument('-c', '--client', action='store_true', help='Is this a client?')
 parser.add_argument('-a', '--address', type=str, default='http://localhost:8080', help='What is the server address?')
+parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
 args = parser.parse_args()
 
 peer = args.peer
 
 def log(m):
-    print(m)
+    if args.verbose:
+        print(m)
 
 def startVPNserver(lport, raddr, rport):
     """Start the VPN server and wait for connection"""
@@ -43,7 +45,7 @@ thrdPrtyHost = "http://localhost:8080"
 web = WebConnect(args.address, lport)
 
 token = web.get("/")
-log(token)
+print("Token is: "+token)
 
 if peer:
     respons = web.post("/connect/",
@@ -53,6 +55,7 @@ if peer:
     log(respons)
     raddr, rport = respons.split(",")
     """This is where we are supposed to start the openVPN client"""
+    knocker.s.close()
     vpn = Process(target=startVPNclient, args=(lport, raddr, rport))
     vpn.start()
 else:
