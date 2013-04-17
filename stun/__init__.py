@@ -1,9 +1,9 @@
 #coding=utf-8
 
 """Slightly modified version of https://github.com/jtriley/pystun, to make it run under Python3"""
-__credits__ "Justin Riley (https://github.com/jtriley) and Gaohawk"
-__copyright__ "Unknown"
-__license__ "MIT"
+__credits__ = "Justin Riley (https://github.com/jtriley) and Gaohawk"
+__copyright__ = "Unknown"
+__license__ = "MIT"
 
 """Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
@@ -229,8 +229,9 @@ def get_nat_type(s, source_ip, source_port, stun_host=None):
 
 
 def get_ip_info(source_ip="0.0.0.0", source_port=54320, stun_host=None):
-    socket.setdefaulttimeout(2)
+    #socket.setdefaulttimeout(2)
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.settimeout(2)
     s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
     s.bind((source_ip, source_port))
     nat_type, nat = get_nat_type(s, source_ip, source_port,
