@@ -49,8 +49,11 @@ post_args = {'lport': lport}
 if not args.no_stun:
     """Get external IP address from stun, and test the connection capabilities"""
     print("STUN - Testing connection...")
-    stun = get_ip_info(source_port=randint(1025, 65535))
+    src_port=randint(1025, 65535)
+    stun = get_ip_info(source_port=src_port)
     log(stun)
+    stun_preserves_port = True if stun[2] == src_port else False
+    log("STUN - Preserves port: "+str(stun_preserves_port))
     post_args['stun_ip'] = stun[1]
 
 # Get token from server
