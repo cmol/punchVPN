@@ -56,6 +56,18 @@ if not args.no_stun:
     log("STUN - Preserves port: "+str(stun_preserves_port))
     post_args['stun_ip'] = stun[1]
 
+
+if not stun_preserves_port:
+    """
+    As for now, we do not have any other method of making connections for UDP traffic,
+    other than udp hole punching.
+    For the connection to work, both ends of the tunnel must have preserving ports.
+    When UPnP, NAT-PMP, and IGD get implemented, other situations will make it easier
+    to connect to eachother.
+    """
+    print("Sorry, you need preserve port to connect to your peer :-( ...")
+    exit(1)
+
 # Get token from server
 token = web.get("/")["token"]
 post_args['uuid'] = token
