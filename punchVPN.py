@@ -20,9 +20,27 @@ def startVPN(lport, raddr, rport, lVPN, rVPN):
         if os.name == 'posix':
             os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tun1 --ifconfig 10.4.0.2 10.4.0.1 --verb 9")
 
+def test_stun():
+    """Let STUN do its thing"""
+    if not args.no_stun:
+        """Get external IP address from stun, and test the connection capabilities"""
+        print("STUN - Testing connection...")
+        src_port=randint(1025, 65535)
+        stun = get_ip_info(source_port=src_port)
+        log(stun)
+        stun_preserves_port = True if stun[2] == src_port else False
+        log("STUN - Preserves port: "+str(stun_preserves_port))
+        post_args['stun_ip'] = stun[1]
+        return stun, stun_preserves_port
+
 def main():
     """Write something clever here...."""
-    # Choose some random ports (stop "early" to be sure we get a port)
+
+    # Get external ip-address and test what NAT type we are behind
+    #print( test_stun())
+    stun, nat_preserves_port = test_stun() or None, None
+
+    # Choose a random port (stop "early" to be sure we get a port)
     lport = randint(1025, 60000)
 
     # Make the udpKnocker and socket. Get the maybe new lport
@@ -35,18 +53,8 @@ def main():
     # Build a standart dict of arguments to POST
     post_args = {'lport': lport}
 
-    if not args.no_stun:
-        """Get external IP address from stun, and test the connection capabilities"""
-        print("STUN - Testing connection...")
-        src_port=randint(1025, 65535)
-        stun = get_ip_info(source_port=src_port)
-        log(stun)
-        stun_preserves_port = True if stun[2] == src_port else False
-        log("STUN - Preserves port: "+str(stun_preserves_port))
-        post_args['stun_ip'] = stun[1]
 
-
-    if not args.no_stun and not stun_preserves_port:
+    if not args.no_stun and not nat_preserves_port:
         """
         As for now, we do not have any other method of making connections for UDP traffic,
         other than udp hole punching.
@@ -62,9 +70,9 @@ def main():
     post_args['uuid'] = token
     print("Token is: "+token)
 
-    if peer:
+    if args.peer:
         """Connect and tell you want 'token'"""
-        post_args['token'] = peer
+        post_args['token'] = args.peer
         respons = web.post("/connect/", post_args)
         if respons.get('err'):
             print("Got error: "+respons['err'])
@@ -79,7 +87,7 @@ def main():
     lVPNaddr = respons["me.VPNaddr"]
     rVPNaddr = respons["peer.VPNaddr"]
 
-    if not peer:
+    if not args.peer:
         """UDP knock if needed and tell the 3rd party"""
         s = knocker.knock(raddr, int(rport))
         log(web.post("/ready/", {'uuid': token}))
