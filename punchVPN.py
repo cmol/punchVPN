@@ -40,6 +40,17 @@ def main():
     #print( test_stun())
     stun, nat_preserves_port = test_stun() or None, None
 
+    if not args.no_stun and not nat_preserves_port:
+        """
+        As for now, we do not have any other method of making connections for UDP traffic,
+        other than udp hole punching.
+        For the connection to work, both ends of the tunnel must have preserving ports.
+        When UPnP, NAT-PMP, and IGD get implemented, other situations will make it easier
+        to connect to eachother.
+        """
+        print("Sorry, you need preserve port to connect to your peer :-( ...")
+        exit(1)
+    
     # Choose a random port (stop "early" to be sure we get a port)
     lport = randint(1025, 60000)
 
@@ -52,18 +63,6 @@ def main():
 
     # Build a standart dict of arguments to POST
     post_args = {'lport': lport}
-
-
-    if not args.no_stun and not nat_preserves_port:
-        """
-        As for now, we do not have any other method of making connections for UDP traffic,
-        other than udp hole punching.
-        For the connection to work, both ends of the tunnel must have preserving ports.
-        When UPnP, NAT-PMP, and IGD get implemented, other situations will make it easier
-        to connect to eachother.
-        """
-        print("Sorry, you need preserve port to connect to your peer :-( ...")
-        exit(1)
 
     # Get token from server
     token = web.get("/")["token"]
