@@ -11,33 +11,17 @@ from stun import get_ip_info
 
 def log(m):
     """Add logging based on ARGS"""
-    global args
     if args.verbose:
         print(m)
 
 def startVPN(lport, raddr, rport, lVPN, rVPN):
     """Start the VPN client and connect"""
-    global args
     if not args.no_vpn:
         if os.name == 'posix':
             os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tun1 --ifconfig 10.4.0.2 10.4.0.1 --verb 9")
 
 def main():
-
-    parser = argparse.ArgumentParser(prog='punchVPN.py',
-                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                    description='Client for making p2p VPN connections behind nat')
-    parser.add_argument('-p', '--peer', type=str, default=None, help='Token of your peer')
-    parser.add_argument('-c', '--client', action='store_true', help='Is this a client?')
-    parser.add_argument('-a', '--address', type=str, default='http://localhost:8080', help='What is the server address?')
-    parser.add_argument('--no-vpn', action='store_true', help='Run with no VPN (for debug)')
-    parser.add_argument('--no-stun', action='store_true', help='Run with no STUN')
-    parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
-    global args
-    args = parser.parse_args()
-
-    peer = args.peer
-
+    """Write something clever here...."""
     # Choose some random ports (stop "early" to be sure we get a port)
     lport = randint(1025, 60000)
 
@@ -108,4 +92,19 @@ def main():
     vpn.join()
 
 if __name__ == '__main__':
+    """Runner for the script. This will hopefully allow us to compile for windows."""
+
+    # Parse all the command line arguments, hopefully in a sane manner.
+    parser = argparse.ArgumentParser(prog='punchVPN.py',
+                                    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+                                    description='Client for making p2p VPN connections behind nat')
+    parser.add_argument('-p', '--peer', type=str, default=None, help='Token of your peer')
+    parser.add_argument('-c', '--client', action='store_true', help='Is this a client?')
+    parser.add_argument('-a', '--address', type=str, default='http://localhost:8080', help='What is the server address?')
+    parser.add_argument('--no-vpn', action='store_true', help='Run with no VPN (for debug)')
+    parser.add_argument('--no-stun', action='store_true', help='Run with no STUN')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
+    args = parser.parse_args()
+
+    # Run the main program, this is where the fun begins
     main()
