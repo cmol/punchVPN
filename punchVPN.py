@@ -7,6 +7,7 @@ from punchVPN.WebConnect import WebConnect
 import argparse
 from multiprocessing import Process
 import os
+from stun import get_ip_info
 
 parser = argparse.ArgumentParser(prog='punchVPN.py',
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -15,6 +16,7 @@ parser.add_argument('-p', '--peer', type=str, default=None, help='Token of your 
 parser.add_argument('-c', '--client', action='store_true', help='Is this a client?')
 parser.add_argument('-a', '--address', type=str, default='http://localhost:8080', help='What is the server address?')
 parser.add_argument('--no-vpn', action='store_true', help='Run with no VPN (for debug)')
+parser.add_argument('--no-stun', action='store_true', help='Run with no STUN')
 parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
 args = parser.parse_args()
 
@@ -41,24 +43,31 @@ lport = knocker.lport
 # Connect to the webserver for connection and such
 web = WebConnect(args.address, lport)
 
+# Build a standart dict of arguments to POST
+post_args = {'lport': lport}
+
+if not args.no_stun:
+    """Get external IP address from stun, and test the connection capabilities"""
+    print("STUN - Testing connection...")
+    stun = get_ip_info(source_port=randint(1025, 65535))
+    log(stun)
+    post_args['stun_ip'] = stun[1]
+
 # Get token from server
 token = web.get("/")["token"]
+post_args['uuid'] = token
 print("Token is: "+token)
 
 if peer:
     """Connect and tell you want 'token'"""
-    respons = web.post("/connect/",
-        {'token': peer,
-         'lport': lport,
-         'uuid':  token})
+    post_args['token'] = peer
+    respons = web.post("/connect/", post_args)
     if respons.get('err'):
         print("Got error: "+respons['err'])
         exit()
 else:
     """Connect and wait for someone to access 'token'"""
-    respons = web.post("/me/",
-        {'uuid': token,
-         'lport' : lport})
+    respons = web.post("/me/", post_args)
 
 log(respons)
 raddr = respons["peer.ip"]

@@ -73,7 +73,8 @@ def me():
     post_data = json.loads(request.POST.get('body'))
 
     # Create and add object for self (me) to the peers dict
-    me = Peer(request.environ.get('REMOTE_ADDR'), post_data['lport'])
+    me = Peer(None, post_data['lport'])
+    me.ip = post_data.get('stun_ip') or request.environ.get('REMOTE_ADDR')
     peers[post_data['uuid']] = me
 
     # Looping wait for the right client
@@ -114,7 +115,8 @@ def connect():
 
     # Create and add self (me) to peers dict.
     # Sets peer(token).peer to self
-    me = Peer(request.environ.get('REMOTE_ADDR'), post_data['lport'])
+    me = Peer(None, post_data['lport'])
+    me.ip = post_data.get('stun_ip') or request.environ.get('REMOTE_ADDR')
     peers[post_data['uuid']] = me
     peers[token].peer = me
 
