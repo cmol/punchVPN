@@ -9,6 +9,15 @@ from multiprocessing import Process
 import os
 from stun import get_ip_info
 
+PRESERVES_PORT = 1
+SEQUENTIAL_PORT = 2
+RANDOM_PORT = 3
+
+port_strings = {
+        PRESERVES_PORT: "Preserved port allocation",
+        SEQUENTIAL_PORT: "Sequential port allocation",
+        RANDOM_PORT: "Random port allocation"}
+
 def log(m):
     """Add logging based on ARGS"""
     if args.verbose:
@@ -21,26 +30,45 @@ def startVPN(lport, raddr, rport, lVPN, rVPN):
             os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tun1 --ifconfig 10.4.0.2 10.4.0.1 --verb 9")
 
 def test_stun():
-    """Let STUN do its thing"""
-    if not args.no_stun:
-        """Get external IP address from stun, and test the connection capabilities"""
-        print("STUN - Testing connection...")
-        src_port=randint(1025, 65535)
-        stun = get_ip_info(source_port=src_port)
-        log(stun)
-        stun_preserves_port = True if stun[2] == src_port else False
-        log("STUN - Preserves port: "+str(stun_preserves_port))
-        post_args['stun_ip'] = stun[1]
-        return stun, stun_preserves_port
+    """Get external IP address from stun, and test the connection capabilities"""
+    print("STUN - Testing connection...")
+    src_port=randint(1025, 65535)
+    stun = get_ip_info(source_port=src_port)
+    log(stun)
+    port_mapping = PRESERVES_PORT if stun[2] == src_port else None
+
+    if port_mapping != PRESERVES_PORT:
+        """Test for sequential port mapping"""
+        seq_stun = get_ip_info(source_port=src_port+1)
+        log(seq_stun)
+        port_mapping = SQUENTIAL_PORT if stun[2] + 1 == seq_stun[2] else RANDOM_PORT
+
+    log("STUN - Port allocation: "+port_strings[port_mapping]) 
+    ret = (stun, (seq_stun or None)), port_mapping, src_port
+    return ret
 
 def main():
     """Write something clever here...."""
+    post_args = {}
+
+    """This is our methods for connecting.
+    At least one of them must return true"""
+    client_cap = {
+            'upnp': False,
+            'nat_pmp': False,
+            'udp_preserve': False,
+            'udp_seqential': False}
 
     # Get external ip-address and test what NAT type we are behind
-    #print( test_stun())
-    stun, nat_preserves_port = test_stun() or None, None
+    if not args.no_stun:
+        stun, port_mapping, stun_port = test_stun()
+        post_args['stun_ip'] = stun[0][1]
+        if port_mapping == PRESERVES_PORT:
+            client_cap['udp_preserve'] = True
+        if port_mapping == SEQUENTIAL_PORT:
+            client_cap['udp_seqential'] = True
 
-    if not args.no_stun and not nat_preserves_port:
+    if not args.no_stun and not args.peer and port_mapping == RANDOM_PORT:
         """
         As for now, we do not have any other method of making connections for UDP traffic,
         other than udp hole punching.
@@ -48,7 +76,8 @@ def main():
         When UPnP, NAT-PMP, and IGD get implemented, other situations will make it easier
         to connect to eachother.
         """
-        print("Sorry, you need preserve port to connect to your peer :-( ...")
+        print("Sorry, you cannot connect to your peer with random port allocation :-(")
+        log(client_cap)
         exit(1)
     
     # Choose a random port (stop "early" to be sure we get a port)
