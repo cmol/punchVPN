@@ -43,8 +43,9 @@ def test_stun():
         log(seq_stun)
         port_mapping = SQUENTIAL_PORT if stun[2] + 1 == seq_stun[2] else RANDOM_PORT
 
-    log("STUN - Port allocation: "+port_strings[port_mapping]) 
-    ret = (stun, (seq_stun or None)), port_mapping, src_port
+    log("STUN - Port allocation: "+port_strings[port_mapping])
+    seq_stun = seq_stun or None
+    ret = (stun, seq_stun), port_mapping, src_port
     return ret
 
 def main():
