@@ -61,6 +61,23 @@ def main():
             'udp_preserve': False,
             'udp_seqential': False}
 
+    # Choose a random port (stop "early" to be sure we get a port)
+    lport = randint(1025, 60000)
+
+    # Make the udpKnocker and socket. Get the maybe new lport
+    knocker = udpKnock(socket.socket(socket.AF_INET, socket.SOCK_DGRAM), lport)
+    lport = knocker.lport
+
+    # Test the natPMP capabilities
+    print("NAT-PMP - Testing for NAT-PMP...    ")
+    nat_pmp = map_external_port(lport=lport)
+    if nat_pmp:
+        print("NAT-PMP - [SUCCESS]")
+        client_cap['nat_pmp'] = True
+        external_port = nat_pmp[0]
+    else:
+        print("NAT-PMP - [FAILED]")
+
     # Get external ip-address and test what NAT type we are behind
     if not args.no_stun:
         stun, port_mapping, stun_port = test_stun()
@@ -82,12 +99,6 @@ def main():
         log(client_cap)
         exit(1)
     
-    # Choose a random port (stop "early" to be sure we get a port)
-    lport = randint(1025, 60000)
-
-    # Make the udpKnocker and socket. Get the maybe new lport
-    knocker = udpKnock(socket.socket(socket.AF_INET, socket.SOCK_DGRAM), lport)
-    lport = knocker.lport
 
     # Connect to the webserver for connection and such
     web = WebConnect(args.address, lport)
