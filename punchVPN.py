@@ -8,6 +8,7 @@ import argparse
 from multiprocessing import Process
 import os
 from stun import get_ip_info
+from natPMP import map_external_port
 
 PRESERVES_PORT = 1
 SEQUENTIAL_PORT = 2
