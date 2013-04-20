@@ -114,7 +114,7 @@ def map_external_port(lport=random.randint(1025,65535), external_port=0, timeout
 
     while stimeout < 6:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.bind(('',random.randint(1024, 65535)))
+        s.bind(('',random.randint(1025, 65535)))
         s.settimeout(stimeout)
 
         if send_payload(s, payload, gateway):
