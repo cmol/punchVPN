@@ -3,10 +3,9 @@ import urllib.parse
 import json
 
 class WebConnect(object):
-    def __init__(self, host, lport):
+    def __init__(self, host):
         """Initialize the object, and setup some basic stuff"""
         self.host = host
-        self.lport = lport
 
     def get(self, path):
         """GET an URL, and check for status codes"""

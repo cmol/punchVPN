@@ -53,7 +53,7 @@ def test_stun():
 def gracefull_shutdown(signum, frame):
     """Make a gracefull shutdown, and tell the server about it"""
     global token
-    web = WebConnect(args.address, 12345)
+    web = WebConnect(args.address)
     log("Closing connection...")
     web.post("/disconnect/", {'uuid': token})
     exit(1)
@@ -114,7 +114,7 @@ def main():
     
 
     # Connect to the webserver for connection and such
-    web = WebConnect(args.address, lport)
+    web = WebConnect(args.address)
 
     # Build a standart dict of arguments to POST
     post_args = {'lport': lport}
