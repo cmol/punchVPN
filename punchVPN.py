@@ -11,6 +11,7 @@ from stun import get_ip_info
 from natPMP import map_external_port
 from upnp_igd import upnp_igd
 import signal
+import logging
 
 PRESERVES_PORT = 1
 SEQUENTIAL_PORT = 2
@@ -21,15 +22,7 @@ port_strings = {
         SEQUENTIAL_PORT: "Sequential port allocation",
         RANDOM_PORT: "Random port allocation"}
 
-def log(m):
-    """Add logging based on ARGS"""
-    if not args.silent:
-        print(m)
-
-def debug(m):
-    """Add debugging based on ARGS"""
-    if args.verbose:
-        print(m)
+log = logging.getLogger("PunchVPN")
 
 def startVPN(lport, raddr, rport, lVPN, rVPN):
     """Start the VPN client and connect"""
@@ -39,19 +32,19 @@ def startVPN(lport, raddr, rport, lVPN, rVPN):
 
 def test_stun():
     """Get external IP address from stun, and test the connection capabilities"""
-    log("STUN - Testing connection...")
+    log.info("STUN - Testing connection...")
     src_port=randint(1025, 65535)
     stun = get_ip_info(source_port=src_port)
-    debug(stun)
+    log.debug(stun)
     port_mapping = PRESERVES_PORT if stun[2] == src_port else None
 
     if port_mapping != PRESERVES_PORT:
         """Test for sequential port mapping"""
         seq_stun = get_ip_info(source_port=src_port+1)
-        debug(seq_stun)
+        log.debug(seq_stun)
         port_mapping = SQUENTIAL_PORT if stun[2] + 1 == seq_stun[2] else RANDOM_PORT
 
-    debug("STUN - Port allocation: "+port_strings[port_mapping])
+    log.debug("STUN - Port allocation: "+port_strings[port_mapping])
     seq_stun = seq_stun or None
     ret = (stun, seq_stun), port_mapping, src_port
     return ret
@@ -75,7 +68,7 @@ def gracefull_shutdown(signum, frame):
     """Make a gracefull shutdown, and tell the server about it"""
     global token
     web = WebConnect(args.address)
-    debug("Closing connection...")
+    log.debug("Closing connection...")
     web.post("/disconnect/", {'uuid': token})
     exit(1)
 
@@ -104,14 +97,14 @@ def main():
 
     # Test the natPMP capabilities
     if not args.no_natpmp:
-        log("NAT-PMP - Testing for NAT-PMP...    ")
+        log.info("NAT-PMP - Testing for NAT-PMP...    ")
         nat_pmp = map_external_port(lport=lport)
         if nat_pmp:
-            log("NAT-PMP - [SUCCESS]")
+            log.info("NAT-PMP - [SUCCESS]")
             client_cap['nat_pmp'] = True
             external_port = nat_pmp[0]
         else:
-            log("NAT-PMP - [FAILED]")
+            log.info("NAT-PMP - [FAILED]")
 
     # Test the UPnP-IGD capabilities
     if not args.no_upnpigd:
@@ -147,8 +140,8 @@ def main():
         When UPnP, NAT-PMP, and IGD get implemented, other situations will make it easier
         to connect to eachother.
         """
-        log("Sorry, you cannot connect to your peer with random port allocation :-(")
-        debug(client_cap)
+        log.info("Sorry, you cannot connect to your peer with random port allocation :-(")
+        log.debug(client_cap)
         exit(1)
     
 
@@ -161,20 +154,20 @@ def main():
     # Get token from server
     token = web.get("/")["token"]
     post_args['uuid'] = token
-    log("Token is: "+token)
+    log.info("Token is: "+token)
 
     if args.peer:
         """Connect and tell you want 'token'"""
         post_args['token'] = args.peer
         respons = web.post("/connect/", post_args)
         if respons.get('err'):
-            log("Got error: "+respons['err'])
+            log.info("Got error: "+respons['err'])
             exit(1)
     else:
         """Connect and wait for someone to access 'token'"""
         respons = web.post("/me/", post_args)
 
-    debug(respons)
+    log.debug(respons)
     raddr = respons["peer.ip"]
     rport = respons["peer.lport"]
     lVPNaddr = respons["me.VPNaddr"]
@@ -183,7 +176,7 @@ def main():
     if not args.peer:
         """UDP knock if needed and tell the 3rd party"""
         s = knocker.knock(raddr, int(rport))
-        debug(web.post("/ready/", {'uuid': token}))
+        log.debug(web.post("/ready/", {'uuid': token}))
 
     knocker.s.close()
     vpn = Process(target=startVPN, args=(lport, raddr, rport, lVPNaddr, rVPNaddr))
@@ -209,6 +202,13 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
     parser.add_argument('-s', '--silent', action='store_true', help='No output at all')
     args = parser.parse_args()
+
+    if not args.silent or args.verbose:
+        logging.basicConfig()
+        if args.verbose:
+            log.setLevel(logging.DEBUG)
+        else:
+            log.setLevel(logging.INFO)
 
     # Run the main program, this is where the fun begins
     main()
