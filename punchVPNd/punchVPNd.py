@@ -169,6 +169,25 @@ def ready():
     new_connect_event.clear()
     return json.dumps({"status": "OK"})
 
+@route('/disconnect/', method='POST')
+def disconnect():
+    """Removes peer from peer list in event of a
+    client side error or trap"""
+
+    # Register globals
+    global peers
+
+    # Parse POST data from json to dict
+    post_data = json.loads(request.POST.get('body'))
+
+    # Look for peer to delete, and delete if it exists
+    if peers.get(post_data['uuid']):
+        del peers[post_data['uuid']]
+        return json.dumps({"status": "OK"})
+    else:
+        return json.dumps({'err': 'NOT_CONNECTED'})
+
+
 app = bottle.app()
 app.install(BeakerPlugin())
 
