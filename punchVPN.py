@@ -9,6 +9,7 @@ from multiprocessing import Process
 import os
 from stun import get_ip_info
 from natPMP import map_external_port
+import signal
 
 PRESERVES_PORT = 1
 SEQUENTIAL_PORT = 2
@@ -21,6 +22,11 @@ port_strings = {
 
 def log(m):
     """Add logging based on ARGS"""
+    if not args.silent:
+        print(m)
+
+def debug(m):
+    """Add debugging based on ARGS"""
     if args.verbose:
         print(m)
 
@@ -32,26 +38,37 @@ def startVPN(lport, raddr, rport, lVPN, rVPN):
 
 def test_stun():
     """Get external IP address from stun, and test the connection capabilities"""
-    print("STUN - Testing connection...")
+    log("STUN - Testing connection...")
     src_port=randint(1025, 65535)
     stun = get_ip_info(source_port=src_port)
-    log(stun)
+    debug(stun)
     port_mapping = PRESERVES_PORT if stun[2] == src_port else None
 
     if port_mapping != PRESERVES_PORT:
         """Test for sequential port mapping"""
         seq_stun = get_ip_info(source_port=src_port+1)
-        log(seq_stun)
+        debug(seq_stun)
         port_mapping = SQUENTIAL_PORT if stun[2] + 1 == seq_stun[2] else RANDOM_PORT
 
-    log("STUN - Port allocation: "+port_strings[port_mapping])
+    debug("STUN - Port allocation: "+port_strings[port_mapping])
     seq_stun = seq_stun or None
     ret = (stun, seq_stun), port_mapping, src_port
     return ret
 
+def gracefull_shutdown(signum, frame):
+    """Make a gracefull shutdown, and tell the server about it"""
+    global token
+    web = WebConnect(args.address)
+    debug("Closing connection...")
+    web.post("/disconnect/", {'uuid': token})
+    exit(1)
+
 def main():
-    """Write something clever here...."""
+    global token
     post_args = {}
+
+    # Register a trap for a gracefull shutdown
+    signal.signal(signal.SIGINT, gracefull_shutdown)
 
     """This is our methods for connecting.
     At least one of them must return true"""
@@ -70,14 +87,14 @@ def main():
 
     # Test the natPMP capabilities
     if not args.no_natpmp:
-        print("NAT-PMP - Testing for NAT-PMP...    ")
+        log("NAT-PMP - Testing for NAT-PMP...    ")
         nat_pmp = map_external_port(lport=lport)
         if nat_pmp:
-            print("NAT-PMP - [SUCCESS]")
+            log("NAT-PMP - [SUCCESS]")
             client_cap['nat_pmp'] = True
             external_port = nat_pmp[0]
         else:
-            print("NAT-PMP - [FAILED]")
+            log("NAT-PMP - [FAILED]")
 
     # Get external ip-address and test what NAT type we are behind
     if not args.no_stun:
@@ -96,13 +113,13 @@ def main():
         When UPnP, NAT-PMP, and IGD get implemented, other situations will make it easier
         to connect to eachother.
         """
-        print("Sorry, you cannot connect to your peer with random port allocation :-(")
-        log(client_cap)
+        log("Sorry, you cannot connect to your peer with random port allocation :-(")
+        debug(client_cap)
         exit(1)
     
 
     # Connect to the webserver for connection and such
-    web = WebConnect(args.address, lport)
+    web = WebConnect(args.address)
 
     # Build a standart dict of arguments to POST
     post_args = {'lport': lport}
@@ -110,31 +127,20 @@ def main():
     # Get token from server
     token = web.get("/")["token"]
     post_args['uuid'] = token
-    print("Token is: "+token)
+    log("Token is: "+token)
 
     if args.peer:
         """Connect and tell you want 'token'"""
         post_args['token'] = args.peer
-        try:
-            respons = web.post("/connect/", post_args)
-        except KeyboardInterrupt:
-            log("Closing connection...")
-            web.post("/disconnect/", post_args)
-            exit(1)
+        respons = web.post("/connect/", post_args)
         if respons.get('err'):
-            print("Got error: "+respons['err'])
+            log("Got error: "+respons['err'])
             exit(1)
     else:
         """Connect and wait for someone to access 'token'"""
-        try:
-            respons = web.post("/me/", post_args)
-        except KeyboardInterrupt:
-            log("Closing connection...")
-            web.post("/disconnect/", post_args)
-            exit(1)
+        respons = web.post("/me/", post_args)
 
-
-    log(respons)
+    debug(respons)
     raddr = respons["peer.ip"]
     rport = respons["peer.lport"]
     lVPNaddr = respons["me.VPNaddr"]
@@ -143,7 +149,7 @@ def main():
     if not args.peer:
         """UDP knock if needed and tell the 3rd party"""
         s = knocker.knock(raddr, int(rport))
-        log(web.post("/ready/", {'uuid': token}))
+        debug(web.post("/ready/", {'uuid': token}))
 
     knocker.s.close()
     vpn = Process(target=startVPN, args=(lport, raddr, rport, lVPNaddr, rVPNaddr))
@@ -166,6 +172,7 @@ if __name__ == '__main__':
     parser.add_argument('--no-stun', action='store_true', help='Run with no STUN')
     parser.add_argument('--no-natpmp', action='store_true', help='Run with no nat-PMP')
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
+    parser.add_argument('-s', '--silent', action='store_true', help='No output at all')
     args = parser.parse_args()
 
     # Run the main program, this is where the fun begins
