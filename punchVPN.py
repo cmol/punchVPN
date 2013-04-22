@@ -9,6 +9,7 @@ from multiprocessing import Process
 import os
 from stun import get_ip_info
 from natPMP import map_external_port
+import signal
 
 PRESERVES_PORT = 1
 SEQUENTIAL_PORT = 2
@@ -49,9 +50,20 @@ def test_stun():
     ret = (stun, seq_stun), port_mapping, src_port
     return ret
 
+def gracefull_shutdown(signum, frame):
+    """Make a gracefull shutdown, and tell the server about it"""
+    global token
+    web = WebConnect(args.address, 12345)
+    log("Closing connection...")
+    web.post("/disconnect/", {'uuid': token})
+    exit(1)
+
 def main():
-    """Write something clever here...."""
+    global token
     post_args = {}
+
+    # Register a trap for a gracefull shutdown
+    signal.signal(signal.SIGINT, gracefull_shutdown)
 
     """This is our methods for connecting.
     At least one of them must return true"""
@@ -115,23 +127,13 @@ def main():
     if args.peer:
         """Connect and tell you want 'token'"""
         post_args['token'] = args.peer
-        try:
-            respons = web.post("/connect/", post_args)
-        except KeyboardInterrupt:
-            log("Closing connection...")
-            web.post("/disconnect/", post_args)
-            exit(1)
+        respons = web.post("/connect/", post_args)
         if respons.get('err'):
             print("Got error: "+respons['err'])
             exit(1)
     else:
         """Connect and wait for someone to access 'token'"""
-        try:
-            respons = web.post("/me/", post_args)
-        except KeyboardInterrupt:
-            log("Closing connection...")
-            web.post("/disconnect/", post_args)
-            exit(1)
+        respons = web.post("/me/", post_args)
 
 
     log(respons)
