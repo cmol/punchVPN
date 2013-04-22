@@ -108,7 +108,7 @@ def main():
 
     # Test the UPnP-IGD capabilities
     if not args.no_upnpigd:
-        log("UPnP-IGD - Testing for UPnP-IDG...")
+        log.info("UPnP-IGD - Testing for UPnP-IDG...")
 
         # Find IP-Address of local machine
         # TODO: Find fix for IPv6-addresses
@@ -117,11 +117,11 @@ def main():
         # Creating the UPnP device checker
         upnp = upnp_igd()
         if upnp.search() and upnp.AddPortMapping(ip, lport, 'UDP'):
-            log("UPnP-IGD - [SUCCESS]")
+            log.info("UPnP-IGD - [SUCCESS]")
             client_cap['upnp'] = True
             external_port = lport
         else:
-            log("UPnP-IGD - [FAILED]")
+            log.info("UPnP-IGD - [FAILED]")
 
     # Get external ip-address and test what NAT type we are behind
     if not args.no_stun:
