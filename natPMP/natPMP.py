@@ -103,10 +103,16 @@ def map_external_port(lport=random.randint(1025,65535), external_port=0, timeout
     """Try mapping an external port to an internal port via the natPMP spec
     This will also test if the gateway is capable of doing natPMP (timeout based),
     and determine the default gateway.
-    
+
     It is highly recommended that the lport is provided and bound in advance,
-    as this module will not test if the port is bindable"""
-    
+    as this module will not test if the port is bindable
+
+    int lport
+    int external_port
+    int timeout
+
+    return tuple(external_port, timeout) or False"""
+
     gateway = determine_gateway()
     stimeout = .25
 
@@ -122,6 +128,9 @@ def map_external_port(lport=random.randint(1025,65535), external_port=0, timeout
                 rpayload = s.recvfrom(4096)
             except socket.error as err:
                 if (err.errno and err.errno != errno.ETIMEDOUT) or str(err) != 'timed out':
+                    """For some reason, the timed out error have no errno, although the
+                    errno atrribute is existing (set to None). For this reason, we get this
+                    weird error handeling. It might be a bug in python3.2.3"""
                     raise err
                 s = None
             else:
