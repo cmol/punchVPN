@@ -69,14 +69,15 @@ def main():
     lport = knocker.lport
 
     # Test the natPMP capabilities
-    print("NAT-PMP - Testing for NAT-PMP...    ")
-    nat_pmp = map_external_port(lport=lport)
-    if nat_pmp:
-        print("NAT-PMP - [SUCCESS]")
-        client_cap['nat_pmp'] = True
-        external_port = nat_pmp[0]
-    else:
-        print("NAT-PMP - [FAILED]")
+    if not args.no_natpmp:
+        print("NAT-PMP - Testing for NAT-PMP...    ")
+        nat_pmp = map_external_port(lport=lport)
+        if nat_pmp:
+            print("NAT-PMP - [SUCCESS]")
+            client_cap['nat_pmp'] = True
+            external_port = nat_pmp[0]
+        else:
+            print("NAT-PMP - [FAILED]")
 
     # Get external ip-address and test what NAT type we are behind
     if not args.no_stun:
@@ -114,13 +115,24 @@ def main():
     if args.peer:
         """Connect and tell you want 'token'"""
         post_args['token'] = args.peer
-        respons = web.post("/connect/", post_args)
+        try:
+            respons = web.post("/connect/", post_args)
+        except KeyboardInterrupt:
+            log("Closing connection...")
+            web.post("/disconnect/", post_args)
+            exit(1)
         if respons.get('err'):
             print("Got error: "+respons['err'])
-            exit()
+            exit(1)
     else:
         """Connect and wait for someone to access 'token'"""
-        respons = web.post("/me/", post_args)
+        try:
+            respons = web.post("/me/", post_args)
+        except KeyboardInterrupt:
+            log("Closing connection...")
+            web.post("/disconnect/", post_args)
+            exit(1)
+
 
     log(respons)
     raddr = respons["peer.ip"]
@@ -152,6 +164,7 @@ if __name__ == '__main__':
     parser.add_argument('-a', '--address', type=str, default='http://localhost:8080', help='What is the server address?')
     parser.add_argument('--no-vpn', action='store_true', help='Run with no VPN (for debug)')
     parser.add_argument('--no-stun', action='store_true', help='Run with no STUN')
+    parser.add_argument('--no-natpmp', action='store_true', help='Run with no nat-PMP')
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
     args = parser.parse_args()
 
