@@ -102,7 +102,7 @@ def main():
         if nat_pmp:
             log.info("NAT-PMP - [SUCCESS]")
             client_cap['nat_pmp'] = True
-            external_port = nat_pmp[0]
+            post_args['external_port'] = nat_pmp[0]
         else:
             log.info("NAT-PMP - [FAILED]")
 
@@ -119,7 +119,7 @@ def main():
         if upnp.search() and upnp.AddPortMapping(ip, lport, 'UDP'):
             log.info("UPnP-IGD - [SUCCESS]")
             client_cap['upnp'] = True
-            external_port = lport
+            post_args['external_port'] = lport
         else:
             log.info("UPnP-IGD - [FAILED]")
 
@@ -149,7 +149,9 @@ def main():
     web = WebConnect(args.address)
 
     # Build a standart dict of arguments to POST
-    post_args = {'lport': lport}
+    post_args = {
+            'lport': lport,
+            'client_cap': client_cap}
 
     # Get token from server
     token = web.get("/")["token"]
