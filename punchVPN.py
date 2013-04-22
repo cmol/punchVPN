@@ -9,6 +9,7 @@ from multiprocessing import Process
 import os
 from stun import get_ip_info
 from natPMP import map_external_port
+from upnp_igd import upnp_igd
 import signal
 
 PRESERVES_PORT = 1
@@ -55,6 +56,21 @@ def test_stun():
     ret = (stun, seq_stun), port_mapping, src_port
     return ret
 
+def find_ip(addr):
+    """Find local ip to hostserver via a tmp socket.
+
+    If the result is a local address, use 8.8.8.8 (google public dns-a) as a 
+    temporary solution. This will most likely only happen during development."""
+    s_ip = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s_ip.connect((addr, 1234))
+    ip = s_ip.getsockname()[0]
+    s_ip.close()
+
+    # Small hacky for when running a local server, eg. when developing
+    if ip.startswith('127') or ip == "0.0.0.0":
+        ip = find_ip('8.8.8.8')
+    return ip
+
 def gracefull_shutdown(signum, frame):
     """Make a gracefull shutdown, and tell the server about it"""
     global token
@@ -85,6 +101,7 @@ def main():
     knocker = udpKnock(socket.socket(socket.AF_INET, socket.SOCK_DGRAM), lport)
     lport = knocker.lport
 
+
     # Test the natPMP capabilities
     if not args.no_natpmp:
         log("NAT-PMP - Testing for NAT-PMP...    ")
@@ -95,6 +112,23 @@ def main():
             external_port = nat_pmp[0]
         else:
             log("NAT-PMP - [FAILED]")
+
+    # Test the UPnP-IGD capabilities
+    if not args.no_upnpigd:
+        log("UPnP-IGD - Testing for UPnP-IDG...")
+
+        # Find IP-Address of local machine
+        # TODO: Find fix for IPv6-addresses
+        find_ip(args.address.split(":")[1][2:])
+
+        # Creating the UPnP device checker
+        upnp = upnp_igd()
+        if upnp.search() and upnp.AddPortMapping(ip, lport, 'UDP'):
+            log("UPnP-IGD - [SUCCESS]")
+            client_cap['upnp'] = True
+            external_port = lport
+        else:
+            log("UPnP-IGD - [FAILED]")
 
     # Get external ip-address and test what NAT type we are behind
     if not args.no_stun:
@@ -171,6 +205,7 @@ if __name__ == '__main__':
     parser.add_argument('--no-vpn', action='store_true', help='Run with no VPN (for debug)')
     parser.add_argument('--no-stun', action='store_true', help='Run with no STUN')
     parser.add_argument('--no-natpmp', action='store_true', help='Run with no nat-PMP')
+    parser.add_argument('--no-upnpigd', action='store_true', help='Run with no UPnP-IGD')
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
     parser.add_argument('-s', '--silent', action='store_true', help='No output at all')
     args = parser.parse_args()
