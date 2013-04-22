@@ -105,7 +105,11 @@ def map_external_port(lport=random.randint(1025,65535), external_port=0, timeout
     and determine the default gateway.
 
     It is highly recommended that the lport is provided and bound in advance,
-    as this module will not test if the port is bindable
+    as this module will not test if the port is bindable, and will not return the lport.
+
+    If the timeout is set to 0 the mapping will be destroid. In this case the external
+    port must also be set to 0 and from the draft, is seems that the lport must be the
+    same as in the time of creation.
 
     int lport
     int external_port
@@ -142,4 +146,4 @@ def map_external_port(lport=random.randint(1025,65535), external_port=0, timeout
     return False
 
 if __name__ == '__main__':
-    print(map_external_port())
+    print(map_external_port(lport=12345))
