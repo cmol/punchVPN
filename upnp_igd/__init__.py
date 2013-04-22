@@ -14,7 +14,6 @@ class upnp_igd:
 	def __init__(self):
 		# Store for created port-mappings, used for cleaning purposes
 		self._mapped_ports = {}
-		pass
 
 	def __del__(self):
 		#The socket module is not available if this is __main__
