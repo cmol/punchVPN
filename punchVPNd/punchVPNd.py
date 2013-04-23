@@ -47,6 +47,8 @@ class Peer(object):
         self.lport = lport
         self.VPNaddr = None
         self.peer = None
+        self.cap = None
+        self.mode = None
 
 peers = {}
 new_connect_event = Event()
@@ -75,6 +77,7 @@ def me():
     # Create and add object for self (me) to the peers dict
     me = Peer(None, post_data['lport'])
     me.ip = post_data.get('stun_ip') or request.environ.get('REMOTE_ADDR')
+    me.cap = post_data['client_cap']
     peers[post_data['uuid']] = me
 
     # Looping wait for the right client
@@ -87,7 +90,8 @@ def me():
             msg = {"peer.ip": me.peer.ip,
                    "peer.lport": me.peer.lport,
                    "peer.VPNaddr": me.peer.VPNaddr,
-                   "me.VPNaddr": me.VPNaddr}
+                   "me.VPNaddr": me.VPNaddr,
+                   "me.mode": me.mode}
             msg = json.dumps(msg)
             return msg
 
@@ -117,13 +121,30 @@ def connect():
     # Sets peer(token).peer to self
     me = Peer(None, post_data['lport'])
     me.ip = post_data.get('stun_ip') or request.environ.get('REMOTE_ADDR')
+    me.cap = post_data['client_cap']
+
+    # Dertermine how we want to connect
+    if peers[token].cap['upnp'] or peers[token].cap['nat_pmp']:
+        me.mode = 'client'
+        peers[token].mode = 'server'
+    elif me.cap['upnp'] or me.cap['nat_pmp']:
+        me.mode = 'server'
+        peers[token].mode = 'client'
+    elif (me.cap['udp_preserve'] or me.cap['udp_sequential']) and (peers[token].cap['udp_preserve'] or peers[token].cap['udp_sequential']):
+        me.mode = 'p2p'
+        peers[token].mode = 'p2p'
+    else:
+        # For now, we'll go with trying p2p. Stun could be disabled on the client
+        me.mode = 'p2p'
+        peers[token].mode = 'p2p'
+
     peers[post_data['uuid']] = me
     peers[token].peer = me
 
     # Find link local addresses for useing in VPN
-    c,d = randint(1,254), randint(1,253)
-    me.VPNaddr = "169.254."+str(c)+"."+str(d+1)
-    peers[token].VPNaddr = "169.254."+str(c)+"."+str(d)
+    c,d = str(randint(1,254)), str(randint(1,253))
+    me.VPNaddr = "169.254."+c+"."+str(int(d)+1)
+    peers[token].VPNaddr = "169.254."+c+"."+d
 
     # Raises the events for peers to wakeup and connect
     new_request_event.set()
@@ -140,7 +161,8 @@ def connect():
             msg = {"peer.ip": me.peer.ip,
                    "peer.lport": me.peer.lport,
                    "peer.VPNaddr": me.peer.VPNaddr,
-                   "me.VPNaddr": me.VPNaddr}
+                   "me.VPNaddr": me.VPNaddr,
+                   "me.mode": me.mode}
             msg = json.dumps(msg)
             del peers[post_data['uuid']]
             del peers[token]
