@@ -95,6 +95,8 @@ def main():
     knocker = udpKnock(socket.socket(socket.AF_INET, socket.SOCK_DGRAM), lport)
     lport = knocker.lport
 
+    # Build default post_args dict
+    post_args = {'lport': lport}
 
     # Test the natPMP capabilities
     if not args.no_natpmp:
@@ -103,7 +105,7 @@ def main():
         if nat_pmp:
             log.info("NAT-PMP - [SUCCESS]")
             client_cap['nat_pmp'] = True
-            post_args['external_port'] = nat_pmp[0]
+            post_args['lport'] = nat_pmp[0]
         else:
             log.info("NAT-PMP - [FAILED]")
 
@@ -120,7 +122,6 @@ def main():
         if upnp.search() and upnp.AddPortMapping(ip, lport, 'UDP'):
             log.info("UPnP-IGD - [SUCCESS]")
             client_cap['upnp'] = True
-            post_args['external_port'] = lport
         else:
             log.info("UPnP-IGD - [FAILED]")
 
@@ -149,10 +150,8 @@ def main():
     # Connect to the webserver for connection and such
     web = WebConnect(args.address)
 
-    # Build a standart dict of arguments to POST
-    post_args = {
-            'lport': lport,
-            'client_cap': client_cap}
+    # Add client caps to post_args
+    post_args['client_cap'] = client_cap
 
     # Get token from server
     token = web.get("/")["token"]
