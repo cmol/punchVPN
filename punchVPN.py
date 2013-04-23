@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+import logging
+log = logging.getLogger("PunchVPN")
 import punchVPN
 import socket
 from random import randint
@@ -11,7 +13,6 @@ from stun import get_ip_info
 from natPMP import map_external_port
 from upnp_igd import upnp_igd
 import signal
-import logging
 
 PRESERVES_PORT = 1
 SEQUENTIAL_PORT = 2
