@@ -38,6 +38,7 @@ def test_stun():
     log.debug(stun)
     port_mapping = PRESERVES_PORT if stun[2] == src_port else None
 
+    seq_stun = None
     if port_mapping != PRESERVES_PORT:
         """Test for sequential port mapping"""
         seq_stun = get_ip_info(source_port=src_port+1)
@@ -143,7 +144,7 @@ def main():
         log.info("Sorry, you cannot connect to your peer with random port allocation :-(")
         log.debug(client_cap)
         exit(1)
-    
+
 
     # Connect to the webserver for connection and such
     web = WebConnect(args.address)
