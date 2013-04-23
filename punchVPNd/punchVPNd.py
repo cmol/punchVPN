@@ -1,3 +1,8 @@
+import logging
+logging.basicConfig()
+log = logging.getLogger("PunchVPNd")
+log.setLevel(logging.DEBUG)
+
 import inspect
 import uuid
 from gevent import monkey; monkey.patch_all()
@@ -8,11 +13,6 @@ from bottle import route, request, static_file, template, run
 from time import sleep
 import json
 from random import randint
-
-def log(m):
-    """Logger, only log if asked to. (Default: False)"""
-    if False:
-        print m
 
 class BeakerPlugin(object):
     name = 'beaker'
@@ -81,7 +81,7 @@ def me():
     peers[post_data['uuid']] = me
 
     # Looping wait for the right client
-    log("Peer '"+post_data['uuid']+"' is waiting")
+    log.info("Peer '"+post_data['uuid']+"' is waiting")
     while(1):
         new_request_event.wait()
 
@@ -151,7 +151,7 @@ def connect():
     new_request_event.clear()
 
     # Looping wait for peer to return a ready connection
-    log("Peer '"+post_data['uuid']+"' requested '"+token+"'")
+    log.info("Peer '"+post_data['uuid']+"' requested '"+token+"'")
     while(1):
         new_connect_event.wait()
 
@@ -184,7 +184,7 @@ def ready():
     # Wow, that feels weird
     me = peers[post_data['uuid']]
     me.peer.peer = me
-    log("Peer '"+post_data['uuid']+"' is ready")
+    log.info("Peer '"+post_data['uuid']+"' is ready")
 
     # Raise events for waiting connections and return ready
     new_connect_event.set()
