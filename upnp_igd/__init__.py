@@ -2,6 +2,7 @@ import socket
 from urllib.request import urlopen
 import xml.dom.minidom as minidom
 from random import randint
+import logging
 
 """ http://upnp.org/specs/gw/UPnP-gw-InternetGatewayDevice-v2-Device.pdf
 Simple module for mapping and deleting port-forwards on UPnP-IGD devices
@@ -10,6 +11,8 @@ UPnP standard compliance is limited/lacking
 Only tested against Linux-IGD
 No real error-messages are parsed/supplied, only True and False are returned/provided
 """
+
+log = logging.getLogger('PunchVPN.upnp_igd')
 
 class upnp_igd:
     def __init__(self):
@@ -33,6 +36,7 @@ class upnp_igd:
     
     def search(self):
         """Multicast SSDP discover, returns true if we can find an IGD device (_isIGD)"""
+        log.info('Searching for IGD devices')
         self._XML = []
         self._host = None
         #Standard multicast address and port for SSDP discover
@@ -67,10 +71,12 @@ class upnp_igd:
                     data = data.decode('UTF-8')
                     if data.startswith('HTTP/1.1 200 OK'):
                         if self._isIGD(data):
+                            log.info('IGD device found')
                             return True
             except:
                 #Most likely a timeout
                 break
+        log.info('No IGD devices found')
         return False
 
     def _isIGD(self, headers):
@@ -80,6 +86,7 @@ class upnp_igd:
         for line in headers.split('\r\n'):
             #LOCATION indicates where the device XML is located
             if line.startswith('LOCATION:'):
+                log.debug('Fetching device XML from location specified in response header\n %s' % line)
                 location = line.split('LOCATION: ')[1]
                 request = urlopen(location)
                 xml = request.read().decode('UTF-8')
@@ -103,6 +110,8 @@ class upnp_igd:
         port        -- Requested port as integer
         protocol    -- Requested protocol, use 'TCP' or 'UDP'
         """
+
+        log.info('Mapping protocol %s port % to host at' % (protocol, port, ip))
         if not self._host:
             return False
         response = ''
@@ -133,6 +142,8 @@ class upnp_igd:
         s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         s.connect(self._host)
 
+        log.debug('sending SOAP request for AddPortMapping\n%s' % body)
+
         s.send((header+body).encode('UTF-8'))
         while True:
             data = s.recv(4096)
@@ -140,9 +151,11 @@ class upnp_igd:
                 break
             else:
                 response += data.decode('UTF-8')
+        log.debug('IGD device responded with \n%s' % response)
         #Look for the HTML status-code to see if everything is OK. Linux IGD soap-response had no additional info, so this was faster to implement
         status = response.split('\n', 1)[0].split(' ', 2)[1] == '200'
         if status:
+            log.info('IGD device acknowledged request')
             self._mapped_ports[port, protocol] = True
         return status
 
@@ -155,8 +168,9 @@ class upnp_igd:
         port        -- Requested port as integer
         protocol    -- Requested protocol, use 'TCP' or 'UDP'
         """
-
+        log.info('Removing mapping for protocol %s and port %' % (protocol, port))
         if not self._host:
+            log.warning('No IGD device known')
             return False
         response = ''
         #Timeconstraints did not allow creating a soap module/parser, UPnP requires NewRemoteHost, NewExternalPort and NewProtocol for this action
@@ -180,6 +194,8 @@ class upnp_igd:
         s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
         s.connect(self._host)
 
+        log.debug('sending SOAP request for DeletePortMapping\n%s' % body)
+
         s.send((header+body).encode('UTF-8'))
         while True:
             data = s.recv(4096)
@@ -187,8 +203,11 @@ class upnp_igd:
                 break
             else:
                 response += data.decode('UTF-8')
+        log.debug('IGD device responded with \n%s' % response)
         #Look for the HTML status-code to see if everything is OK. Linux IGD soap-response had no additional info, so this was faster to implement
         status = response.split('\n', 1)[0].split(' ', 2)[1] == '200'
+        if status:
+             log.info('IGD device acknowledged request')
         #Remove this tnrey from self._mapped_ports if it is present
         if status and self._mapped_ports[port, protocol]:
             del self._mapped_ports[port, protocol]

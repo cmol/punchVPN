@@ -16,7 +16,7 @@ import socket
 import binascii
 import logging
 
-log = logging.getLogger("pystun")
+log = logging.getLogger("PunchVPN.stun")
 
 def enable_logging():
     logging.basicConfig()
