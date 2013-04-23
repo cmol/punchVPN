@@ -86,7 +86,7 @@ def main():
             'upnp': False,
             'nat_pmp': False,
             'udp_preserve': False,
-            'udp_seqential': False}
+            'udp_sequential': False}
 
     # Choose a random port (stop "early" to be sure we get a port)
     lport = randint(1025, 60000)
