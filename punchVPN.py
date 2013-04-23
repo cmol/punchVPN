@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import logging
+logging.basicConfig()
 log = logging.getLogger("PunchVPN")
 import punchVPN
 import socket
@@ -22,8 +23,6 @@ port_strings = {
         PRESERVES_PORT: "Preserved port allocation",
         SEQUENTIAL_PORT: "Sequential port allocation",
         RANDOM_PORT: "Random port allocation"}
-
-log = logging.getLogger("PunchVPN")
 
 def startVPN(lport, raddr, rport, lVPN, rVPN):
     """Start the VPN client and connect"""
@@ -208,7 +207,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if not args.silent or args.verbose:
-        logging.basicConfig()
         if args.verbose:
             log.setLevel(logging.DEBUG)
         else:
