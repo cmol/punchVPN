@@ -25,11 +25,16 @@ port_strings = {
         SEQUENTIAL_PORT: "Sequential port allocation",
         RANDOM_PORT: "Random port allocation"}
 
-def startVPN(lport, raddr, rport, lVPN, rVPN):
+def startVPN(lport, raddr, rport, lVPN, rVPN, mode, key):
     """Start the VPN client and connect"""
     if not args.no_vpn:
         if os.name == 'posix':
-            os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tun1 --ifconfig 10.4.0.2 10.4.0.1 --verb 9")
+            if mode == 'p2p':
+                os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tun1 --ifconfig "+lVPN+" "+rVPN+" --verb 9")
+            elif mode == 'server':
+                pass
+            elif mode == 'client':
+                pass
 
 def test_stun():
     """Get external IP address from stun, and test the connection capabilities"""
@@ -208,6 +213,7 @@ def main():
     rport = respons["peer.lport"]
     lVPNaddr = respons["me.VPNaddr"]
     rVPNaddr = respons["peer.VPNaddr"]
+    mode = respons['me.mode']
     key = write_key(respons['me.key'])
 
     if not args.peer:
@@ -216,7 +222,7 @@ def main():
         log.debug(web.post("/ready/", {'uuid': token}))
 
     knocker.s.close()
-    vpn = Process(target=startVPN, args=(lport, raddr, rport, lVPNaddr, rVPNaddr))
+    vpn = Process(target=startVPN, args=(lport, raddr, rport, lVPNaddr, rVPNaddr, mode, key))
     vpn.start()
 
     vpn.join()
@@ -230,8 +236,7 @@ if __name__ == '__main__':
                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                     description='Client for making p2p VPN connections behind nat')
     parser.add_argument('-p', '--peer', type=str, default=None, help='Token of your peer')
-    parser.add_argument('-c', '--client', action='store_true', help='Is this a client?')
-    parser.add_argument('-a', '--address', type=str, default='http://localhost:8080', help='What is the server address?')
+    parser.add_argument('-a', '--address', type=str, default='http://localhost:8080', help='What is the server address? (eg. https://server-ip:443)')
     parser.add_argument('--no-vpn', action='store_true', help='Run with no VPN (for debug)')
     parser.add_argument('--no-stun', action='store_true', help='Run with no STUN')
     parser.add_argument('--no-natpmp', action='store_true', help='Run with no nat-PMP')
