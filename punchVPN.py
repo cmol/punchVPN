@@ -14,6 +14,7 @@ from stun import get_ip_info
 from natPMP import map_external_port
 from upnp_igd import upnp_igd
 import signal
+import stat
 
 PRESERVES_PORT = 1
 SEQUENTIAL_PORT = 2
@@ -64,6 +65,39 @@ def find_ip(addr):
     if ip.startswith('127') or ip == "0.0.0.0":
         ip = find_ip('8.8.8.8')
     return ip
+
+def write_key(key):
+    """Write the key to a file so it can me used to make a secure connection.
+    To enhance security a bit, the file is firstly opened, written, closed,
+    chmodded to enhance security a bit, and then the key is written to the file.
+
+    string key
+
+    return string path_to_key"""
+
+    # Register globals
+    global token
+
+    # Find the OS temp dir
+    if os.name == 'nt':
+        path = "%temp%\\"
+    else:
+        path = "/tmp/"
+
+    name = 'punchVPN-'+token+'.key'
+
+    # Make the file a bit more secure
+    f = open(path+name, 'w')
+    f.write("0")
+    os.chmod(path+name, stat.S_IREAD | stat.S_IWRITE)
+    f.close()
+
+    # Write the actual key to the file
+    f = open(path+name, 'w')
+    f.write(key)
+    f.close()
+
+    return path+name
 
 def gracefull_shutdown(signum, frame):
     """Make a gracefull shutdown, and tell the server about it"""
@@ -174,6 +208,7 @@ def main():
     rport = respons["peer.lport"]
     lVPNaddr = respons["me.VPNaddr"]
     rVPNaddr = respons["peer.VPNaddr"]
+    key = write_key(respons['me.key'])
 
     if not args.peer:
         """UDP knock if needed and tell the 3rd party"""
@@ -184,8 +219,8 @@ def main():
     vpn = Process(target=startVPN, args=(lport, raddr, rport, lVPNaddr, rVPNaddr))
     vpn.start()
 
-
     vpn.join()
+    os.remove(key)
 
 if __name__ == '__main__':
     """Runner for the script. This will hopefully allow us to compile for windows."""
