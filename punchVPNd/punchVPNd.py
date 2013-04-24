@@ -13,6 +13,7 @@ from bottle import route, request, static_file, template, run
 from time import sleep
 import json
 from random import randint
+from subprocess import check_output
 
 class BeakerPlugin(object):
     name = 'beaker'
@@ -49,6 +50,7 @@ class Peer(object):
         self.peer = None
         self.cap = None
         self.mode = None
+        self.key = None
 
 peers = {}
 new_connect_event = Event()
@@ -74,10 +76,14 @@ def me():
     # Parse the POST data from JSON to a dict
     post_data = json.loads(request.POST.get('body'))
 
+    # Generate keypair for the connection
+    key = check_output('openvpn --genkey --secret /dev/stdout', shell=True).decode().strip()
+
     # Create and add object for self (me) to the peers dict
     me = Peer(None, post_data['lport'])
     me.ip = post_data.get('stun_ip') or request.environ.get('REMOTE_ADDR')
     me.cap = post_data['client_cap']
+    me.key = key
     peers[post_data['uuid']] = me
 
     # Looping wait for the right client
@@ -91,7 +97,8 @@ def me():
                    "peer.lport": me.peer.lport,
                    "peer.VPNaddr": me.peer.VPNaddr,
                    "me.VPNaddr": me.VPNaddr,
-                   "me.mode": me.mode}
+                   "me.mode": me.mode,
+                   "me.key": me.key}
             msg = json.dumps(msg)
             return msg
 
@@ -162,7 +169,8 @@ def connect():
                    "peer.lport": me.peer.lport,
                    "peer.VPNaddr": me.peer.VPNaddr,
                    "me.VPNaddr": me.VPNaddr,
-                   "me.mode": me.mode}
+                   "me.mode": me.mode,
+                   "me.key": me.peer.key}
             msg = json.dumps(msg)
             del peers[post_data['uuid']]
             del peers[token]
