@@ -3,7 +3,7 @@ punchVPN
 
 > Wrapper around openVPN to make p2p VPN with both peers behind nat.
 
-*punchVPN* aims to create secure tunnels where it is normally not possible
+**punchVPN** aims to create secure tunnels where it is normally not possible
 to make tunnes without technical insight. This is done by using a
 cobination of UDP hole punching, UPnP-IGD, and NAT-PMP (which is
 relatively new)
@@ -11,7 +11,7 @@ relatively new)
 All of this is done possible by having a trird party communicating port
 numbers and addresses between the two (and for now, only two) clients,
 and telling them where and when to connect. This third party is
-*punchVPNd*. The third party is also responsible for creating the
+**punchVPNd**. The third party is also responsible for creating the
 symmetric keys shared among the clients.
 
 Usage:
