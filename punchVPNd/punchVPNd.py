@@ -1,11 +1,11 @@
-import logging
-logging.basicConfig()
-log = logging.getLogger("PunchVPNd")
-log.setLevel(logging.DEBUG)
 
 import inspect
 import uuid
 from gevent import monkey; monkey.patch_all()
+import logging
+logging.basicConfig()
+log = logging.getLogger("PunchVPNd")
+log.setLevel(logging.DEBUG)
 from gevent.event import Event
 from beaker.middleware import SessionMiddleware
 import bottle
