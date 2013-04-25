@@ -12,7 +12,7 @@ from multiprocessing import Process
 from time import sleep
 import os
 from stun import get_ip_info
-from natPMP import map_external_port
+from natPMP import natPMP
 from upnp_igd import upnp_igd
 import signal
 import stat
@@ -149,7 +149,8 @@ def main():
     # Test the natPMP capabilities
     if not args.no_natpmp:
         log.info("NAT-PMP - Testing for NAT-PMP...    ")
-        nat_pmp = map_external_port(lport=lport)
+        npmp = natPMP()
+        nat_pmp = npmp.map_external_port(lport=lport)
         if nat_pmp:
             log.info("NAT-PMP - [SUCCESS]")
             client_cap['nat_pmp'] = True
