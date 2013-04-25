@@ -57,8 +57,14 @@ new_request_event = Event()
 
 @route('/')
 def hello():
-    """Return 2nd part of a UUID4, for a semi-uniqe token"""
-    return json.dumps({"token":str(uuid.uuid4()).split("-")[1]})
+    """Return 2nd part of a UUID4, for a semi-uniqe token. If token is already in the
+    peers list, try another one"""
+    global peers
+    while(True):
+        token = str(uuid.uuid4()).split("-")[1]
+        if not peers.get(token):
+            break
+    return json.dumps({"token": token})
 
 @route('/me/', method='POST')
 def me():
