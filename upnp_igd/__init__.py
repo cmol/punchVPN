@@ -30,8 +30,8 @@ class upnp_igd:
             self.clean()
 
     def clean(self):
-        for (port, protocol) in self._mapped_ports.items():
-            self.DeletePortMapping(port, protocol)
+        for mapping in list(self._mapped_ports):
+            self.DeletePortMapping(mapping[0], mapping[1])
 
     
     def search(self):
@@ -159,7 +159,7 @@ class upnp_igd:
             self._mapped_ports[port, protocol] = True
         return status
 
-    def DeletePortMapping(self,  port, protocol):
+    def DeletePortMapping(self, port, protocol):
         """Deletes a portmap, requires that an IGD device has been found with self.search()
         Linux IGD has a limited status reply (none really) if the syntax is correct, invalid port numbers etc. are not rejected. Because of this, we just return true if the HTTP headers status-code is 200
         If a mapping is present in self.__mapped_ports, it will be removed upon successfull deletion        
