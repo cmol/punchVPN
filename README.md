@@ -38,3 +38,44 @@ The client runs with python3.2 and newer and is run with:
     ./punchVPN.py
 
 If you do not have a python3 installation this will fail.
+
+When you have one of the peers connected, that peer will get a token.
+Use that token with the '-p' parameter to connect to that peer as
+follows:
+
+    ./punchVPN.py -p f3ab
+
+Other command line parameters are as follows:
+
+    usage: punchVPN.py [-h] [-p PEER] [-a ADDRESS] [--no-vpn] [--no-stun]
+                       [--no-natpmp] [--no-upnpigd] [-v] [-s]
+    
+    Client for making p2p VPN connections behind nat
+    
+    optional arguments:
+      -h, --help            show this help message and exit
+      -p PEER, --peer PEER  Token of your peer (default: None)
+      -a ADDRESS, --address ADDRESS
+                            What is the server address? (eg. https://server-
+                            ip:443) (default: http://localhost:8080)
+      --no-vpn              Run with no VPN (for debug) (default: False)
+      --no-stun             Run with no STUN (default: False)
+      --no-natpmp           Run with no nat-PMP (default: False)
+      --no-upnpigd          Run with no UPnP-IGD (default: False)
+      -v, --verbose         Verbose output (default: False)
+      -s, --silent          No output at all (default: False)
+
+License
+=======
+
+The program is available under the **INSERT AGREED LICENSE**
+
+
+Contributing
+============
+
+Right now, this program is developed as part of a school project.
+We would love to have testers but we cannot accept other contributions for
+the time being.
+
+
