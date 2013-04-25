@@ -30,10 +30,11 @@ def startVPN(lport, raddr, rport, lVPN, rVPN, mode, key):
     if not args.no_vpn:
         if os.name == 'posix':
             if mode == 'p2p':
-                os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tun1 --ifconfig "+lVPN+" "+rVPN+" --verb 9")
+                os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tap --ifconfig "+lVPN+" "+rVPN+" --verb 9 --secret STUFF --comp-lzo adaptive --proto udp --ping 30 --mode "+mode)
             elif mode == 'server':
                 pass
             elif mode == 'client':
+                    #--route-no-pull
                 pass
 
 def test_stun():
