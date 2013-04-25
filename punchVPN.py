@@ -220,6 +220,9 @@ def main():
     vpn = Process(target=startVPN, args=(lport, raddr, rport, lVPNaddr, rVPNaddr, mode, key))
     vpn.start()
 
+    # Cleanup
+    if client_cap['nat_pmp']:
+        map_external_port(lport=lport, external_port=0, timeout=0)
     vpn.join()
     os.remove(key)
 
