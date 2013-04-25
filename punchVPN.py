@@ -109,6 +109,12 @@ def write_key(key):
 def gracefull_shutdown(signum, frame):
     """Make a gracefull shutdown, and tell the server about it"""
     global token
+    global client_cap
+    global lport
+
+    if client_cap['nat_pmp']:
+        map_external_port(lport=lport, external_port=0, timeout=0)
+
     web = WebConnect(args.address)
     log.debug("Closing connection...")
     web.post("/disconnect/", {'uuid': token})
@@ -116,6 +122,8 @@ def gracefull_shutdown(signum, frame):
 
 def main():
     global token
+    global client_cap
+    global lport
     post_args = {}
 
     # Register a trap for a gracefull shutdown
