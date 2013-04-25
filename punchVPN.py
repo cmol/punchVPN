@@ -31,7 +31,7 @@ def startVPN(lport, raddr, rport, lVPN, rVPN, mode, key):
     if not args.no_vpn:
         if os.name == 'posix':
             if mode == 'p2p':
-                os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tap --ifconfig "+lVPN+" "+rVPN+" --verb 9 --secret STUFF --comp-lzo adaptive --proto udp --ping 30 --mode "+mode)
+                os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tap --ifconfig "+lVPN+" "+rVPN+" --verb 9 --secret "+key+" --comp-lzo adaptive --proto udp --ping 30 --mode "+mode)
             elif mode == 'server':
                 pass
             elif mode == 'client':
@@ -231,7 +231,7 @@ if __name__ == '__main__':
                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                     description='Client for making p2p VPN connections behind nat')
     parser.add_argument('-p', '--peer', type=str, default=None, help='Token of your peer')
-    parser.add_argument('-a', '--address', type=str, default='http://localhost:8080', help='What is the server address? (eg. https://server-ip:443)')
+    parser.add_argument('-a', '--address', type=str, default='https://punchserver.xlaus.dk', help='What is the server address? (eg. https://server-ip:443)')
     parser.add_argument('--no-vpn', action='store_true', help='Run with no VPN (for debug)')
     parser.add_argument('--no-stun', action='store_true', help='Run with no STUN')
     parser.add_argument('--no-natpmp', action='store_true', help='Run with no nat-PMP')
