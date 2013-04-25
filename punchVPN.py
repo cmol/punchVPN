@@ -33,7 +33,7 @@ def startVPN(lport, raddr, rport, lVPN, rVPN, mode, key):
             if mode == 'p2p':
                 os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tap --ifconfig "+lVPN+" 255.255.255.0 --verb 9 --secret "+key+" --comp-lzo adaptive --proto udp --ping 30 --mode "+mode)
             elif mode == 'server':
-                os.system("openvpn --port "+str(lport)+" --dev tap --verb 9 --proto udp --ifconfig "+lVPN+" 255.255.255. --secret "+key+" --comp-lzo adaptive")
+                os.system("openvpn --port "+str(lport)+" --dev tap --verb 9 --proto udp --ifconfig "+lVPN+" 255.255.255.0 --secret "+key+" --comp-lzo adaptive")
             elif mode == 'client':
                 os.system("openvpn --remote "+raddr+" --proto udp --dev tap --port "+str(rport)+" --verb 9 --ifconfig "+lVPN+" 255.255.255.0 --secret "+key+" --comp-lzo adaptive --route-nopull")
 
