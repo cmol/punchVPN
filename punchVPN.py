@@ -149,7 +149,7 @@ def main():
             log.info("NAT-PMP - [FAILED]")
 
     # Test the UPnP-IGD capabilities
-    if not args.no_upnpigd:
+    if not args.no_upnp:
         log.info("UPnP-IGD - Testing for UPnP-IDG...")
 
         # Find IP-Address of local machine
@@ -240,7 +240,7 @@ if __name__ == '__main__':
     parser.add_argument('--no-vpn', action='store_true', help='Run with no VPN (for debug)')
     parser.add_argument('--no-stun', action='store_true', help='Run with no STUN')
     parser.add_argument('--no-natpmp', action='store_true', help='Run with no nat-PMP')
-    parser.add_argument('--no-upnpigd', action='store_true', help='Run with no UPnP-IGD')
+    parser.add_argument('--no-upnp', action='store_true', help='Run with no UPnP-IGD')
     parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
     parser.add_argument('-s', '--silent', action='store_true', help='No output at all')
     args = parser.parse_args()
