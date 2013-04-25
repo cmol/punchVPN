@@ -111,7 +111,7 @@ class upnp_igd:
         protocol    -- Requested protocol, use 'TCP' or 'UDP'
         """
 
-        log.info('Mapping protocol %s port % to host at' % (protocol, port, ip))
+        log.info('Mapping protocol %s port %s to host at %s' % (protocol, port, ip))
         if not self._host:
             return False
         response = ''
@@ -168,7 +168,7 @@ class upnp_igd:
         port        -- Requested port as integer
         protocol    -- Requested protocol, use 'TCP' or 'UDP'
         """
-        log.info('Removing mapping for protocol %s and port %' % (protocol, port))
+        log.info('Removing mapping for protocol %s and port %s' % (protocol, port))
         if not self._host:
             log.warning('No IGD device known')
             return False

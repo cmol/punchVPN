@@ -156,7 +156,7 @@ def main():
 
         # Find IP-Address of local machine
         # TODO: Find fix for IPv6-addresses
-        find_ip(args.address.split(":")[1][2:])
+        ip = find_ip(args.address.split(":")[1][2:])
 
         # Creating the UPnP device checker
         upnp = upnp_igd()
