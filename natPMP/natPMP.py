@@ -11,6 +11,7 @@ import random
 import errno
 import os
 from subprocess import check_output
+from struct import pack, unpack
 
 def create_payload(local_port, external_port, lifetime):
     """Create the natPMP payload for opening 'external_port'
@@ -23,14 +24,7 @@ def create_payload(local_port, external_port, lifetime):
     return int payload
     """
 
-    return int(
-            bin(int("0", 10))[2:].zfill(8)+                 # Version
-            bin(int("1", 10))[2:].zfill(8)+                 # Map UDP
-            bin(int("0", 10))[2:].zfill(16)+                # Reserved
-            bin(int(str(local_port), 10))[2:].zfill(16)+    # local_port
-            bin(int(str(external_port), 10))[2:].zfill(16)+ # external_port
-            bin(int(str(lifetime), 10))[2:].zfill(32)       # Lifetime of forwarding
-            , 2)
+    return pack('>2B3HI', 0, 1, 0, local_port, external_port, lifetime)
 
 def send_payload(s, payload, gateway):
     """Encode and send the payload to the gateway of the network
@@ -42,7 +36,7 @@ def send_payload(s, payload, gateway):
     return bool success
     """
     try:
-        s.sendto(payload.to_bytes(12,'big'), (gateway, 5351))
+        s.sendto(payload, (gateway, 5351))
         success = True
     except socket.error as err:
         if err.errno != errno.ECONNREFUSED:
@@ -58,8 +52,9 @@ def parse_respons(payload):
     
     return tuple (external_port, lifetime) or False
     """
-    payload = payload.from_bytes(16, 'big')
-    if payload & 0x0000ffff000000000000000000000000 != 0:
+
+    values = unpack('>2BHI2HI', payload)
+    if values[2] != 0:
         """In this case, we get a status code back and can assume
         that we are dealing with a natPMP capable gateway.
         If the status code is anything other than 0, setting the
@@ -67,8 +62,8 @@ def parse_respons(payload):
         return False
 
     # Get lifetime and port using bitmasking
-    lifetime = payload & 0x000000000000000000000000ffffffff
-    external_port = (payload & 0x00000000000000000000ffff00000000) >> 32
+    lifetime = values[6]
+    external_port = values[5]
 
     return external_port, lifetime
 
@@ -84,11 +79,10 @@ def determine_gateway():
 
     if os.name == 'mac':
         """NOT TESTED"""
-        default_gateway = check_output("netstat -nr | grep default | awk '{print $2}'", shell=True).decode().strip()
+        default_gateway = check_output("/usr/sbin/netstat -nr | grep default | awk '{print $2}'", shell=True).decode().strip()
     
     if os.name == 'nt':
-        """Use WMI for finding the default gateway if we are on windows
-        NOT TESTED YET"""
+        """Use WMI for finding the default gateway if we are on windows"""
         import wmi
         wmi_obj = wmi.WMI()
         wmi_sql = "select DefaultIPGateway from Win32_NetworkAdapterConfiguration where IPEnabled=TRUE"
