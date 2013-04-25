@@ -12,6 +12,9 @@ import errno
 import os
 from subprocess import check_output
 from struct import pack, unpack
+import logging
+
+log = logging.getLogger('PunchVPN.nat-pmp')
 
 class natPMP:
 
@@ -29,6 +32,7 @@ class natPMP:
     def cleanup(self):
         if socket and len(self.mapped_ports) > 0:
             for mapping in list(self.mapped_ports):
+                log.info('Delete mapping for port ' + mapping[1])
                 self.map_external_port(lport=mapping[0], external_port=0, timeout=0)
 
     def create_payload(self, local_port, external_port, lifetime):
@@ -109,6 +113,8 @@ class natPMP:
             for dev in wmi_out:
                 default_gateway = dev.DefaultIPGateway[0]
 
+        log.debug('Found gateway ' + default_gateway)
+
         return default_gateway
 
     def map_external_port(self, lport=random.randint(1025,65535), external_port=0, timeout=7200):
@@ -154,12 +160,14 @@ class natPMP:
                             del self.mapped_ports[lport]
                             return True
                         else:
+                            log.debug('Mapping port ' + respons[0])
                             respons = self.parse_respons(rpayload[0])
                             self.mapped_ports[lport] = (lport, respons[0], respons[1])
                             return respons
 
             stimeout = stimeout * 2
 
+        log.debug('Gateway '+self.gateway+' does not support nat-pmp')
         return False
 
 if __name__ == '__main__':
