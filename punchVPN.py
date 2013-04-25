@@ -27,15 +27,22 @@ port_strings = {
         RANDOM_PORT: "Random port allocation"}
 
 def startVPN(lport, raddr, rport, lVPN, rVPN, mode, key):
+    
     """Start the VPN client and connect"""
     if not args.no_vpn:
+        if logging.getLogger().getEffectiveLevel() == logging.DEBUG:
+            verb = "--verb 9"
+        elif logging.getLogger().getEffectiveLevel() == logging.INFO:
+            verb = "--verb 1"
+        else:
+            verb = ""
         if os.name == 'posix':
             if mode == 'p2p':
-                os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tap --ifconfig "+lVPN+" 255.255.255.0 --verb 9 --secret "+key+" --comp-lzo adaptive --proto udp --ping 30 --mode "+mode)
+                os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tap --ifconfig "+lVPN+" 255.255.255.0 "+verb+" --secret "+key+" --comp-lzo adaptive --proto udp --ping 30 --mode "+mode)
             elif mode == 'server':
-                os.system("openvpn --port "+str(lport)+" --dev tap --verb 9 --proto udp --ifconfig "+lVPN+" 255.255.255.0 --secret "+key+" --comp-lzo adaptive")
+                os.system("openvpn --port "+str(lport)+" --dev tap "+verb+" --proto udp --ifconfig "+lVPN+" 255.255.255.0 --secret "+key+" --comp-lzo adaptive")
             elif mode == 'client':
-                os.system("openvpn --remote "+raddr+" --proto udp --dev tap --port "+str(rport)+" --verb 9 --ifconfig "+lVPN+" 255.255.255.0 --secret "+key+" --comp-lzo adaptive --route-nopull")
+                os.system("openvpn --remote "+raddr+" --proto udp --dev tap --port "+str(rport)+" "+verb+" --ifconfig "+lVPN+" 255.255.255.0 --secret "+key+" --comp-lzo adaptive --route-nopull")
 
 def test_stun():
     """Get external IP address from stun, and test the connection capabilities"""
