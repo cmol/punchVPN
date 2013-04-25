@@ -9,6 +9,7 @@ from punchVPN.udpKnock import udpKnock
 from punchVPN.WebConnect import WebConnect
 import argparse
 from multiprocessing import Process
+from time import sleep
 import os
 from stun import get_ip_info
 from natPMP import map_external_port
@@ -174,19 +175,6 @@ def main():
         if port_mapping == SEQUENTIAL_PORT:
             client_cap['udp_seqential'] = True
 
-    if not args.no_stun and not args.peer and port_mapping == RANDOM_PORT:
-        """
-        As for now, we do not have any other method of making connections for UDP traffic,
-        other than udp hole punching.
-        For the connection to work, both ends of the tunnel must have preserving ports.
-        When UPnP, NAT-PMP, and IGD get implemented, other situations will make it easier
-        to connect to eachother.
-        """
-        log.info("Sorry, you cannot connect to your peer with random port allocation :-(")
-        log.debug(client_cap)
-        exit(1)
-
-
     # Connect to the webserver for connection and such
     web = WebConnect(args.address)
 
@@ -216,6 +204,12 @@ def main():
     rVPNaddr = respons["peer.VPNaddr"]
     mode = respons['me.mode']
     key = write_key(respons['me.key'])
+
+    # Tell if we are maybe running into trouble
+    if mode == 'p2p-fallback':
+        log.info("Running in p2p-fallback mode, may not be able to connect...")
+        sleep(2)
+        mode = 'p2p'
 
     if not args.peer:
         """UDP knock if needed and tell the 3rd party"""

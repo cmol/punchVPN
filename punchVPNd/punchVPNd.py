@@ -141,8 +141,8 @@ def connect():
         peers[token].mode = 'p2p'
     else:
         # For now, we'll go with trying p2p. Stun could be disabled on the client
-        me.mode = 'p2p'
-        peers[token].mode = 'p2p'
+        me.mode = 'p2p-fallback'
+        peers[token].mode = 'p2p-fallback'
 
     peers[post_data['uuid']] = me
     peers[token].peer = me
