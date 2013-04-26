@@ -98,13 +98,7 @@ def me():
 
         # Report back the values of the matching client
         if me.peer:
-            msg = {"peer.ip": me.peer.ip,
-                   "peer.lport": me.peer.lport,
-                   "peer.VPNaddr": me.peer.VPNaddr,
-                   "me.VPNaddr": me.VPNaddr,
-                   "me.mode": me.mode,
-                   "me.key": me.key,
-                   'status': 'READY'}
+            msg = {'status': 'READY'}
             msg = json.dumps(msg)
             return msg
 
