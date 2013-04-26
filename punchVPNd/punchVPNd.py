@@ -103,7 +103,8 @@ def me():
                    "peer.VPNaddr": me.peer.VPNaddr,
                    "me.VPNaddr": me.VPNaddr,
                    "me.mode": me.mode,
-                   "me.key": me.key}
+                   "me.key": me.key,
+                   'status': 'READY'}
             msg = json.dumps(msg)
             return msg
 
@@ -196,13 +197,25 @@ def ready():
     # Register me, and set peer of me' peer, to me
     # Wow, that feels weird
     me = peers[post_data['uuid']]
-    me.peer.peer = me
-    log.info("Peer '"+post_data['uuid']+"' is ready")
 
-    # Raise events for waiting connections and return ready
-    new_connect_event.set()
-    new_connect_event.clear()
-    return json.dumps({"status": "OK"})
+    if peers.get(post_data['token']) == me.peer:
+        msg = {"peer.ip": me.peer.ip,
+               "peer.lport": me.peer.lport,
+               "peer.VPNaddr": me.peer.VPNaddr,
+               "me.VPNaddr": me.VPNaddr,
+               "me.mode": me.mode,
+               "me.key": me.key,
+               'status': 'READY'}
+        msg = json.dumps(msg)
+        me.peer.peer = me
+        log.info("Peer '"+post_data['uuid']+"' is ready")
+
+        # Raise events for waiting connections and return ready
+        new_connect_event.set()
+        new_connect_event.clear()
+        return msg
+    else:
+        return json.dumps({'err': 'NOT_CONNECTED'})
 
 @route('/disconnect/', method='POST')
 def disconnect():

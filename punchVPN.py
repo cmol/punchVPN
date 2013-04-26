@@ -211,6 +211,12 @@ def main():
     else:
         """Connect and wait for someone to access 'token'"""
         respons = web.post("/me/", post_args)
+        while(True):
+            peer = input("Enter token of your peer: ")
+            respons = web.post("/ready/", {'uuid': token, 'token': peer})
+            if not respons.get('err'):
+                break
+                s = knocker.knock(respons['peer.ip'], int(respons['peer.lport']))
 
     log.debug(respons)
     raddr = respons["peer.ip"]
@@ -225,11 +231,6 @@ def main():
         log.info("Running in p2p-fallback mode, may not be able to connect...")
         sleep(2)
         mode = 'p2p'
-
-    if not args.peer:
-        """UDP knock if needed and tell the 3rd party"""
-        s = knocker.knock(raddr, int(rport))
-        log.debug(web.post("/ready/", {'uuid': token}))
 
     knocker.s.close()
     vpn = Process(target=startVPN, args=(lport, raddr, rport, lVPNaddr, rVPNaddr, mode, key))
