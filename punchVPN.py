@@ -27,7 +27,6 @@ port_strings = {
         RANDOM_PORT: "Random port allocation"}
 
 def startVPN(lport, raddr, rport, lVPN, rVPN, mode, key):
-    
     """Start the VPN client and connect"""
     if not args.no_vpn:
         if logging.getLogger().getEffectiveLevel() == logging.DEBUG:
