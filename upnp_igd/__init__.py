@@ -212,3 +212,8 @@ class upnp_igd:
         if status and self._mapped_ports[port, protocol]:
             del self._mapped_ports[port, protocol]
         return status
+
+    def GetExternalAddress(self):
+        """Try using UPnP to get the external ip address
+        NOT YET IMPLEMENTED"""
+        return False
