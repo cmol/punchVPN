@@ -2,9 +2,9 @@ import socket
 import errno
 
 class udpKnock(object):
-    
     def __init__(self, s, lport):
-        """docstring for __init__"""
+        """Try binding the port given as lport. If it fails, try the
+        lport + 1, and continue to add 1 to lport, untill it succeeds."""
         while(1):
             try:
                 s.bind(('', lport))
@@ -21,7 +21,7 @@ class udpKnock(object):
 
     def knock(self, addr, rport):
         """Connect to $addr with lport as local port.
-        Try until a port is useable"""
+        Send some garbage data to $addr to perform the udp knocking."""
         self.s.connect((addr, rport))
         self.s.sendto(bytes('knock knock', 'UTF-8'), (addr, rport))
         return self.s
