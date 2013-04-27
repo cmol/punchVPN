@@ -41,9 +41,9 @@ class BeakerPlugin(object):
 
 class Peer(object):
     """Peer class for identifying the peers and creating a relation between them."""
-    def __init__(self, ip, lport):
+    def __init__(self, lport):
         """Set up peer object"""
-        self.ip = ip
+        self.ip = None
         self.lport = lport
         self.VPNaddr = None
         self.peer = None
@@ -85,7 +85,7 @@ def me():
     key = check_output('openvpn --genkey --secret /dev/stdout', shell=True).decode().strip()
 
     # Create and add object for self (me) to the peers dict
-    me = Peer(None, post_data['lport'])
+    me = Peer(post_data['lport'])
     me.ip = post_data.get('stun_ip') or request.environ.get('REMOTE_ADDR')
     me.cap = post_data['client_cap']
     me.key = key
@@ -126,7 +126,7 @@ def connect():
 
     # Create and add self (me) to peers dict.
     # Sets peer(token).peer to self
-    me = Peer(None, post_data['lport'])
+    me = Peer(post_data['lport'])
     me.ip = post_data.get('stun_ip') or request.environ.get('REMOTE_ADDR')
     me.cap = post_data['client_cap']
 
