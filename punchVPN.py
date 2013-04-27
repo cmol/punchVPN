@@ -75,7 +75,7 @@ def find_ip(addr):
     s_ip.close()
 
     # Small hacky for when running a local server, eg. when developing
-    if ip.startswith('127') or ip == "0.0.0.0":
+    if ip.startswith('127') or ip == '0.0.0.0':
         ip = find_ip('8.8.8.8')
     return ip
 
@@ -93,15 +93,15 @@ def write_key(key):
 
     # Find the OS temp dir
     if os.name == 'nt':
-        path = "%temp%\\"
+        path = '%temp%\\'
     else:
-        path = "/tmp/"
+        path = '/tmp/'
 
     name = 'punchVPN-'+token+'.key'
 
     # Make the file a bit more secure
     f = open(path+name, 'w')
-    f.write("0")
+    f.write('0')
     os.chmod(path+name, stat.S_IREAD | stat.S_IWRITE)
     f.close()
 
@@ -123,7 +123,7 @@ def gracefull_shutdown(signum, frame):
 
     web = WebConnect(args.address)
     log.debug("Closing connection...")
-    web.post("/disconnect/", {'uuid': token})
+    web.post('/disconnect/', {'uuid': token})
     exit(1)
 
 def main():
@@ -171,7 +171,7 @@ def main():
 
         # Find IP-Address of local machine
         # TODO: Find fix for IPv6-addresses
-        ip = find_ip(args.address.split(":")[1][2:])
+        ip = find_ip(args.address.split(':')[1][2:])
 
         # Creating the UPnP device checker
         upnp = upnp_igd()
@@ -197,32 +197,32 @@ def main():
     post_args['client_cap'] = client_cap
 
     # Get token from server
-    token = web.get("/")["token"]
+    token = web.get('/')['token']
     post_args['uuid'] = token
     log.info("Token is: "+token)
 
     if args.peer:
         """Connect and tell you want 'token'"""
         post_args['token'] = args.peer
-        respons = web.post("/connect/", post_args)
+        respons = web.post('/connect/', post_args)
         if respons.get('err'):
             log.info("Got error: "+respons['err'])
             exit(1)
     else:
         """Connect and wait for someone to access 'token'"""
-        respons = web.post("/me/", post_args)
+        respons = web.post('/me/', post_args)
         while(True):
             peer = input("Enter token of your peer: ")
-            respons = web.post("/ready/", {'uuid': token, 'token': peer})
+            respons = web.post('/ready/', {'uuid': token, 'token': peer})
             if not respons.get('err'):
                 break
                 s = knocker.knock(respons['peer.ip'], int(respons['peer.lport']))
 
     log.debug(respons)
-    raddr = respons["peer.ip"]
-    rport = respons["peer.lport"]
-    lVPNaddr = respons["me.VPNaddr"]
-    rVPNaddr = respons["peer.VPNaddr"]
+    raddr = respons['peer.ip']
+    rport = respons['peer.lport']
+    lVPNaddr = respons['me.VPNaddr']
+    rVPNaddr = respons['peer.VPNaddr']
     mode = respons['me.mode']
     key = write_key(respons['me.key'])
 
