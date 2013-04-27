@@ -45,6 +45,7 @@ class natPMP:
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.bind(('',random.randint(1025, 65535)))
         s.settimeout(.5)
+        payload = pack('>2B', 0, 0)
 
         if self.send_payload(s, payload, self.gateway):
             try:
