@@ -35,6 +35,38 @@ class natPMP:
                 log.info('Delete mapping for port ' + mapping[1])
                 self.map_external_port(lport=mapping[0], external_port=0, timeout=0)
 
+    def get_external_address(self):
+        """Use nat-pmp to dertermine the external IPv4 address.
+
+        This method relies on knowing that we have a working nat-pmp gateway, and 
+        should therefore only be run in the event of a successfull map_external_port()."""
+
+        log.debug("Determening external address...")
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.bind(('',random.randint(1025, 65535)))
+        s.settimeout(.5)
+
+        if self.send_payload(s, payload, self.gateway):
+            try:
+                rpayload = s.recvfrom(4096)
+            except socket.error as err:
+                if (err.errno and err.errno != errno.ETIMEDOUT) or str(err) != 'timed out':
+                    """For some reason, the timed out error have no errno, although the
+                    errno atrribute is existing (set to None). For this reason, we get this
+                    weird error handeling. It might be a bug in python3.2.3"""
+                    raise err
+                s = None
+                log.debug("Determening external address... [FAILED]")
+                return False
+            else:
+                if rpayload[1][0] == self.gateway:
+                    r = unpack('>2BHI4B',rpayload[0])
+                    ip =  str(r[4])+'.'+str(r[5])+'.'+str(r[6])+'.'+str(r[7])
+                    log.debug("Determening external address... [SUCCESS]")
+                    log.debug("External address is: "+ip)
+                    return ip
+
+
     def create_payload(self, local_port, external_port, lifetime):
         """Create the natPMP payload for opening 'external_port'
         (0 means that the GW will choose one randomly) and
@@ -174,4 +206,7 @@ if __name__ == '__main__':
     logging.basicConfig()
     log.setLevel(logging.DEBUG)
     npmp = natPMP()
-    print(npmp.map_external_port(lport=12345))
+    outcome = npmp.map_external_port(lport=12345)
+    print(outcome)
+    if outcome:
+        print(npmp.get_external_ip())
