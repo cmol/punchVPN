@@ -149,8 +149,9 @@ def main():
     knocker = udpKnock(socket.socket(socket.AF_INET, socket.SOCK_DGRAM), lport)
     lport = knocker.lport
 
-    # Build default post_args dict
+    # Build default post_args dict, and ready a place for the external IP
     post_args = {'lport': lport}
+    external_address = False
 
     # Test the natPMP capabilities
     if not args.no_natpmp:
@@ -161,11 +162,12 @@ def main():
             log.info("NAT-PMP - [SUCCESS]")
             client_cap['nat_pmp'] = True
             post_args['lport'] = nat_pmp[0]
+            external_address = npmp.get_external_address()
         else:
             log.info("NAT-PMP - [FAILED]")
 
     # Test the UPnP-IGD capabilities
-    if not args.no_upnp:
+    if not args.no_upnp and not client_cap['nat_pmp']:
         log.info("UPnP-IGD - Testing for UPnP-IDG...")
 
         # Find IP-Address of local machine
@@ -181,9 +183,9 @@ def main():
             log.info("UPnP-IGD - [FAILED]")
 
     # Get external ip-address and test what NAT type we are behind
-    if not args.no_stun:
+    if not args.no_stun and not external_address:
         stun, port_mapping, stun_port = test_stun()
-        post_args['stun_ip'] = stun[0][1]
+        external_address = stun[0][1]
         if port_mapping == PRESERVES_PORT:
             client_cap['udp_preserve'] = True
         if port_mapping == SEQUENTIAL_PORT:
@@ -192,8 +194,9 @@ def main():
     # Connect to the webserver for connection and such
     web = WebConnect(args.address)
 
-    # Add client caps to post_args
+    # Add client caps and external_address to post_args
     post_args['client_cap'] = client_cap
+    post_args['stun_ip'] = external_address
 
     # Get token from server
     token = web.get('/')['token']
