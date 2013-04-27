@@ -171,5 +171,7 @@ class natPMP:
         return False
 
 if __name__ == '__main__':
+    logging.basicConfig()
+    log.setLevel(logging.DEBUG)
     npmp = natPMP()
     print(npmp.map_external_port(lport=12345))
