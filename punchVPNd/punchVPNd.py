@@ -61,10 +61,10 @@ def hello():
     peers list, try another one"""
     global peers
     while(True):
-        token = str(uuid.uuid4()).split("-")[1]
+        token = str(uuid.uuid4()).split('-')[1]
         if not peers.get(token):
             break
-    return json.dumps({"token": token})
+    return json.dumps({'token': token})
 
 @route('/me/', method='POST')
 def me():
@@ -122,7 +122,7 @@ def connect():
 
     # Look for peer identified by 'token' or return error to client
     if not peers.has_key(token):
-        return json.dumps({"err": "NOT_CONNECTED"})
+        return json.dumps({'err': 'NOT_CONNECTED'})
 
     # Create and add self (me) to peers dict.
     # Sets peer(token).peer to self
@@ -165,12 +165,12 @@ def connect():
         # Delete self and peer from peers dict.
         # return connection params
         if me.peer:
-            msg = {"peer.ip": me.peer.ip,
-                   "peer.lport": me.peer.lport,
-                   "peer.VPNaddr": me.peer.VPNaddr,
-                   "me.VPNaddr": me.VPNaddr,
-                   "me.mode": me.mode,
-                   "me.key": me.peer.key}
+            msg = {'peer.ip': me.peer.ip,
+                   'peer.lport': me.peer.lport,
+                   'peer.VPNaddr': me.peer.VPNaddr,
+                   'me.VPNaddr': me.VPNaddr,
+                   'me.mode': me.mode,
+                   'me.key': me.peer.key}
             msg = json.dumps(msg)
             del peers[post_data['uuid']]
             del peers[token]
@@ -193,12 +193,12 @@ def ready():
     me = peers[post_data['uuid']]
 
     if peers.get(post_data['token']) == me.peer:
-        msg = {"peer.ip": me.peer.ip,
-               "peer.lport": me.peer.lport,
-               "peer.VPNaddr": me.peer.VPNaddr,
-               "me.VPNaddr": me.VPNaddr,
-               "me.mode": me.mode,
-               "me.key": me.key,
+        msg = {'peer.ip': me.peer.ip,
+               'peer.lport': me.peer.lport,
+               'peer.VPNaddr': me.peer.VPNaddr,
+               'me.VPNaddr': me.VPNaddr,
+               'me.mode': me.mode,
+               'me.key': me.key,
                'status': 'READY'}
         msg = json.dumps(msg)
         me.peer.peer = me
