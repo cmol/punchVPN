@@ -68,7 +68,7 @@ Other command line parameters are as follows:
 License
 =======
 
-The program is available under the **INSERT AGREED LICENSE**
+The the included LICENSE file for lincense info
 
 
 Contributing
@@ -77,5 +77,3 @@ Contributing
 Right now, this program is developed as part of a school project.
 We would love to have testers but we cannot accept other contributions for
 the time being.
-
-
