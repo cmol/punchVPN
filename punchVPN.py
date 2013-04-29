@@ -16,6 +16,7 @@ from natPMP import natPMP
 from upnp_igd import upnp_igd
 import signal
 import stat
+from subprocess import call
 
 PRESERVES_PORT = 1
 SEQUENTIAL_PORT = 2
@@ -29,19 +30,67 @@ port_strings = {
 def startVPN(lport, raddr, rport, lVPN, rVPN, mode, key):
     """Start the VPN client and connect"""
     if not args.no_vpn:
-        if logging.getLogger().getEffectiveLevel() == logging.DEBUG:
-            verb = "--verb 9"
-        elif logging.getLogger().getEffectiveLevel() == logging.INFO:
-            verb = "--verb 1"
+
+        params = {}
+
+        log_matrix = {
+            logging.DEBUG:9,
+            logging.INFO:1
+        }
+
+        try:
+            loglevel = log_matrix[log.getEffectiveLevel()]
+        except:
+            loglevel = None
+
+        if loglevel:
+            params['--verb'] = loglevel
         else:
-            verb = ""
+            params['--verb'] = 0
+        
+        params['--verb'] = 0
+
+        params.update({
+            '--secret':key,
+            '--dev':'tap',
+            '--ifconfig':'%s 255.255.255.0' % lVPN,
+            '--comp-lzo':'adaptive',
+            '--proto':'udp',
+            '--secret':key
+        })
+       
+        if mode == 'p2p':
+            params.update({
+                '--lport':str(lport),
+                '--rport':str(rport),
+                '--remote':raddr,
+                '--ping':30,
+                '--mode':mode
+            })
+        elif mode == 'server':
+             params.update({
+                '--port':str(lport),
+            })
+        elif mode == 'client':
+            params.update({
+                '--remote':raddr,
+                '--port':str(rport),
+                '--route-nopull':''
+            })
+
+        log.debug('Openvpn parameters: %s' % params)
+
         if os.name == 'posix':
-            if mode == 'p2p':
-                os.system("openvpn --lport "+str(lport)+" --rport "+str(rport)+" --remote "+raddr+" --dev tap --ifconfig "+lVPN+" 255.255.255.0 "+verb+" --secret "+key+" --comp-lzo adaptive --proto udp --ping 30 --mode "+mode)
-            elif mode == 'server':
-                os.system("openvpn --port "+str(lport)+" --dev tap "+verb+" --proto udp --ifconfig "+lVPN+" 255.255.255.0 --secret "+key+" --comp-lzo adaptive")
-            elif mode == 'client':
-                os.system("openvpn --remote "+raddr+" --proto udp --dev tap --port "+str(rport)+" "+verb+" --ifconfig "+lVPN+" 255.255.255.0 --secret "+key+" --comp-lzo adaptive --route-nopull")
+            callparms = []
+            for parm, value in params.items():
+                callparms.append(parm)
+                #TODO find another way around subproces.call encapsulating parameters with "" if they contain spaces
+                if parm == '--ifconfig':
+                    callparms += value.split(' ')
+                else:
+                    callparms.append(str(value))
+
+            call(['openvpn']+callparms)
 
 def test_stun():
     """Get external IP address from stun, and test the connection capabilities"""
