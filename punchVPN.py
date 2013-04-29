@@ -227,7 +227,7 @@ def main():
         upnp = upnp_igd()
         if upnp.search() and upnp.AddPortMapping(ip, lport, 'UDP'):
             log.info("UPnP-IGD - [SUCCESS]")
-            external_address = upnp.GetExternalAddress()
+            external_address = upnp.GetExternalIPAddress()
             client_cap['upnp'] = True
         else:
             log.info("UPnP-IGD - [FAILED]")

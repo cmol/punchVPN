@@ -213,7 +213,49 @@ class upnp_igd:
             del self._mapped_ports[port, protocol]
         return status
 
-    def GetExternalAddress(self):
-        """Try using UPnP to get the external ip address
-        NOT YET IMPLEMENTED"""
-        return False
+    def GetExternalIPAddress(self):
+        """Asks a found IGD device for it's external ip-address"""
+        
+        if not self._host:
+            return False
+        log.info('Requesting external ip-address')
+        response = ''
+        #Timeconstraints did not allow creating a soap module/parser, UPnP requires NewRemoteHost, NewExternalPort, NewProtocol, NewInternalPort, NewInternalClient, NewEnabled, NewPortMappingDescription, NewLeaseDuration for this action
+
+        body =  '<?xml version="1.0" encoding="UTF-8"?>'\
+            '<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" SOAP-ENV:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'\
+                '<SOAP-ENV:Body>'\
+                    '<m:GetExternalIPAddress xmlns:m="urn:schemas-upnp-org:service:WANIPConnection:1">'\
+                    '</m:GetExternalIPAddress>'\
+                '</SOAP-ENV:Body>'\
+            '</SOAP-ENV:Envelope>'
+
+        header =    'POST /upnp/control/WANIPConn1 HTTP/1.1\r\n'\
+                'Host:%s\r\n'\
+                'Content-Length:%s\r\n'\
+                'Content-Type:text/xml\r\n'\
+                'SOAPAction:"urn:schemas-upnp-org:service:WANIPConnection:1#GetExternalIPAddress"\r\n\r\n' % ((str(self._host[0])+':'+str(self._host[1])), len(body))
+
+        s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+        s.connect(self._host)
+
+        log.debug('Sending SOAP request for GetExternalIPAddress\n%s' % body)
+
+        s.send((header+body).encode('UTF-8'))
+        while True:
+            data = s.recv(4096)
+            if not data:
+                break
+            else:
+                response += data.decode('UTF-8')
+        log.debug('IGD device responded with \n%s' % response)
+        #Look for the HTML status-code to see if everything is OK. Linux IGD soap-response had no additional info, so this was faster to implement
+        status = response.split('\n', 1)[0].split(' ', 2)[1] == '200'
+        if status:
+            log.info('IGD device acknowledged request')
+            soap_reply = response.split('\r\n\r\n')[1]
+            xmlDom = minidom.parseString(soap_reply)
+            ip = xmlDom.getElementsByTagName('NewExternalIPAddress')[0].childNodes[0].data
+            log.debug("IGD external ip-address is %s" % ip)
+            return ip
+        return status
