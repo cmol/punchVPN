@@ -97,11 +97,10 @@ class natPMP:
         """
 
         if os.name == 'posix':
-            default_gateway = check_output("ip route | awk '/default/ {print $3}'", shell=True).decode().strip()
-
-        if os.name == 'mac':
-            """NOT TESTED"""
-            default_gateway = check_output("/usr/sbin/netstat -nr | grep default | awk '{print $2}'", shell=True).decode().strip()
+            if os.uname()[0] == 'Linux':
+                default_gateway = check_output("ip route | awk '/default/ {print $3}'", shell=True).decode().strip()
+            elif os.uname()[0] == 'Darwin':
+                default_gateway = check_output("/usr/sbin/netstat -nr | grep default | awk '{print $2}'", shell=True).decode().strip()
 
         if os.name == 'nt':
             """Use WMI for finding the default gateway if we are on windows"""
