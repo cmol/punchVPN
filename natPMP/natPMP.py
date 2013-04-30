@@ -1,7 +1,7 @@
 """
 Script for requesting a port redirection via natPMP.
 Follows the standart of:
-http://tools.ietf.org/html/draft-cheshire-nat-pmp-07#section-3.3
+http://tools.ietf.org/html/draft-cheshire-nat-pmp-07
 with the exception of hold times. We are not going to wait a little
 above 3 minutes to test for natPMP.
 """
