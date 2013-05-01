@@ -111,7 +111,8 @@ def connect():
     elif me.cap['upnp'] or me.cap['nat_pmp']:
         me.mode = 'server'
         peers[token].mode = 'client'
-    elif (me.cap['udp_preserve'] or me.cap['udp_sequential']) and (peers[token].cap['udp_preserve'] or peers[token].cap['udp_sequential']):
+    elif ((me.cap['udp_preserve'] or me.cap['udp_sequential']) and 
+        (peers[token].cap['udp_preserve'] or peers[token].cap['udp_sequential'])):
         me.mode = 'p2p'
         peers[token].mode = 'p2p'
     else:

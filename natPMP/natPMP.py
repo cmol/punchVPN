@@ -98,12 +98,16 @@ class natPMP:
 
         if os.name == 'posix':
             if os.uname()[0] == 'Linux':
-                default_gateway = check_output("ip route | awk '/default/ {print $3}'", shell=True).decode().strip()
+                default_gateway = check_output("ip route | awk '/default/ {print $3}'",
+                                               shell=True).decode().strip()
             elif os.uname()[0] == 'Darwin':
-                default_gateway = check_output("/usr/sbin/netstat -nr | grep default | awk '{print $2}'", shell=True).decode().strip()
+                default_gateway = check_output("/usr/sbin/netstat -nr | grep default | awk '{print $2}'",
+                                               shell=True).decode().strip()
                 if not default_gateway.split() == [default_gateway]:
                     log.info("Two gateways found! - Using the first one "+default_gateway.split()[0])
-                    log.info("If you want to use the other gateway ("+default_gateway.split()[1]+"), please unplug or disconnect the network you do not want to use")
+                    log.info("If you want to use the other gateway ("+
+                             default_gateway.split()[1]+
+                             "), please unplug or disconnect the network you do not want to use")
                     default_gateway = default_gateway.split()[0]
 
         if os.name == 'nt':

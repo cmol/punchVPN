@@ -5,11 +5,20 @@ __credits__ = "Justin Riley (https://github.com/jtriley) and Gaohawk"
 __copyright__ = "Unknown"
 __license__ = "MIT"
 
-"""Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+"""Permission is hereby granted, free of charge, to any person obtaining a copy of this software
+and associated documentation files (the "Software"), to deal in the Software without restriction,
+including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all copies or substantial
+portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."""
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."""
 
 import random
 import socket
@@ -106,7 +115,13 @@ def gen_tran_id():
 
 
 def stun_test(sock, host, port, source_ip, source_port, send_data=""):
-    retVal = {'Resp':False, 'ExternalIP':None, 'ExternalPort':None, 'SourceIP':None, 'SourcePort':None, 'ChangedIP':None, 'ChangedPort':None}
+    retVal = {'Resp':False,
+              'ExternalIP':None,
+              'ExternalPort':None,
+              'SourceIP':None,
+              'SourcePort':None,
+              'ChangedIP':None,
+              'ChangedPort':None}
     str_len = "%#04d" % (len(send_data)/2)
     TranID = gen_tran_id()
     str_data = ''.join([BindRequestMsg, str_len, TranID, send_data])
@@ -130,7 +145,8 @@ def stun_test(sock, host, port, source_ip, source_port, send_data=""):
                     retVal['Resp'] = False
                     return retVal
         MsgType = binascii.b2a_hex(buf[0:2])
-        if dictValToMsgType[MsgType.decode('UTF-8')] == "BindResponseMsg" and TranID.upper() == binascii.b2a_hex(buf[4:20]).decode('UTF-8').upper():
+        if (dictValToMsgType[MsgType.decode('UTF-8')] == "BindResponseMsg" and
+        TranID.upper() == binascii.b2a_hex(buf[4:20]).decode('UTF-8').upper()):
             recvCorr = True
             retVal['Resp'] = True
             len_message = int(binascii.b2a_hex(buf[2:4]).decode('UTF-8'), 16)
