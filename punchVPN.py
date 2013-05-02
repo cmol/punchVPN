@@ -262,7 +262,7 @@ def main():
             respons = web.post('/ready/', {'uuid': token, 'token': peer})
             if not respons.get('err'):
                 break
-            s = knocker.knock(respons['peer.ip'], int(respons['peer.lport']))
+                s = knocker.knock(respons['peer.ip'], int(respons['peer.lport']))
 
     log.debug(respons)
     raddr = respons['peer.ip']
